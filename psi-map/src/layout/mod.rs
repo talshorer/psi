@@ -15,6 +15,7 @@ struct LayoutData<'a> {
     boundaries: (&'a [usize], &'a [usize], &'a [usize]),
     internal_adjacencies: &'a [(usize, usize)],
     terrains: &'a [char],
+    coastals: &'a [usize],
 }
 
 pub struct ValidatedLayoutData<'a>(&'a LayoutData<'a>);
@@ -82,6 +83,18 @@ impl<'a> ValidatedLayoutData<'a> {
             true
         }
 
+        const fn validate_coastals(coastals: &[usize], num_lands: usize) -> bool {
+            let len = coastals.len();
+            let mut i = 0;
+            while i < len {
+                if !validate_land(coastals[i], num_lands) {
+                    return false;
+                }
+                i += 1;
+            }
+            true
+        }
+
         let num_lands = data.terrains.len();
 
         if validate_terrains(data.terrains)
@@ -90,6 +103,7 @@ impl<'a> ValidatedLayoutData<'a> {
             && validate_boundaries(data.boundaries.1)
             && validate_boundaries(data.boundaries.2)
             && validate_internal_adjacencies(data.internal_adjacencies, num_lands)
+            && validate_coastals(data.coastals, num_lands)
         {
             Some(Self(data))
         } else {
@@ -108,6 +122,7 @@ pub enum Terrain {
     Mountain,
     Sands,
     Wetlands,
+    Ocean,
 }
 
 impl Terrain {
@@ -199,12 +214,6 @@ pub(crate) static COUNTER_CLOCKWISE: LazyLock<Rotate> = LazyLock::new(|| Rotate 
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 pub struct LandNum(pub(crate) usize);
-
-impl LandNum {
-    fn from_idx(idx: usize) -> Self {
-        Self(idx + 1)
-    }
-}
 
 pub(crate) struct LayoutEdge {
     pub(crate) lands: Vec<LandNum>,
@@ -322,6 +331,7 @@ impl Layout {
             boundaries,
             internal_adjacencies: internal_adjacencies_data,
             terrains,
+            coastals,
         } = data.0;
 
         let corner1 = 0;
@@ -334,12 +344,12 @@ impl Layout {
             "Invalid envelope length in validated data"
         );
 
-        let mut internal_adjacencies = HashMap::from_iter(
-            (0..terrains.len()).map(|i| (LandNum::from_idx(i), HashSet::default())),
-        );
+        let mut internal_adjacencies =
+            HashMap::from_iter((0..=terrains.len()).map(|i| (LandNum(i), HashSet::default())));
         for (i, j) in internal_adjacencies_data
             .iter()
             .copied()
+            .chain(coastals.iter().map(|i| (0, *i)))
             .map(|(i, j)| (LandNum(i), LandNum(j)))
         {
             link(&mut internal_adjacencies, i, j);
@@ -358,10 +368,11 @@ impl Layout {
                 .enumerate()
                 .map(|(i, c)| {
                     (
-                        LandNum::from_idx(i),
+                        LandNum(i + 1),
                         Terrain::from_char(c).expect("Invalid terrain char in validated data"),
                     )
                 })
+                .chain(Some((LandNum(0), Terrain::Ocean)))
                 .collect(),
             internal_adjacencies,
         }

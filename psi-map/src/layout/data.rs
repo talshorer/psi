@@ -19,6 +19,7 @@ pub static A: ValidatedLayoutData = ValidatedLayoutData::validate(&LayoutData {
         (7, 8),
     ],
     terrains: &['M', 'W', 'J', 'S', 'W', 'M', 'S', 'J'],
+    coastals: &[1, 2, 3],
 })
 .unwrap();
 pub static B: ValidatedLayoutData = ValidatedLayoutData::validate(&LayoutData {
@@ -41,6 +42,7 @@ pub static B: ValidatedLayoutData = ValidatedLayoutData::validate(&LayoutData {
         (7, 8),
     ],
     terrains: &['W', 'M', 'S', 'J', 'S', 'W', 'M', 'J'],
+    coastals: &[1, 2, 3],
 })
 .unwrap();
 pub static C: ValidatedLayoutData = ValidatedLayoutData::validate(&LayoutData {
@@ -63,6 +65,7 @@ pub static C: ValidatedLayoutData = ValidatedLayoutData::validate(&LayoutData {
         (7, 8),
     ],
     terrains: &['J', 'S', 'M', 'J', 'W', 'S', 'M', 'W'],
+    coastals: &[1, 2, 3],
 })
 .unwrap();
 pub static D: ValidatedLayoutData = ValidatedLayoutData::validate(&LayoutData {
@@ -85,6 +88,7 @@ pub static D: ValidatedLayoutData = ValidatedLayoutData::validate(&LayoutData {
         (7, 8),
     ],
     terrains: &['W', 'J', 'W', 'S', 'M', 'J', 'S', 'M'],
+    coastals: &[1, 2, 3],
 })
 .unwrap();
 pub static E: ValidatedLayoutData = ValidatedLayoutData::validate(&LayoutData {
@@ -107,6 +111,7 @@ pub static E: ValidatedLayoutData = ValidatedLayoutData::validate(&LayoutData {
         (7, 8),
     ],
     terrains: &['S', 'M', 'J', 'W', 'M', 'S', 'J', 'W'],
+    coastals: &[1, 2, 3],
 })
 .unwrap();
 pub static F: ValidatedLayoutData = ValidatedLayoutData::validate(&LayoutData {
@@ -129,6 +134,7 @@ pub static F: ValidatedLayoutData = ValidatedLayoutData::validate(&LayoutData {
         (7, 8),
     ],
     terrains: &['S', 'J', 'W', 'M', 'J', 'M', 'W', 'S'],
+    coastals: &[1, 2, 3],
 })
 .unwrap();
 pub static G: ValidatedLayoutData = ValidatedLayoutData::validate(&LayoutData {
@@ -151,6 +157,7 @@ pub static G: ValidatedLayoutData = ValidatedLayoutData::validate(&LayoutData {
         (7, 8),
     ],
     terrains: &['M', 'W', 'S', 'W', 'S', 'J', 'J', 'M'],
+    coastals: &[1, 2, 3],
 })
 .unwrap();
 pub static H: ValidatedLayoutData = ValidatedLayoutData::validate(&LayoutData {
@@ -174,5 +181,6 @@ pub static H: ValidatedLayoutData = ValidatedLayoutData::validate(&LayoutData {
         (7, 8),
     ],
     terrains: &['J', 'S', 'M', 'M', 'J', 'W', 'W', 'S'],
+    coastals: &[1, 2, 3],
 })
 .unwrap();
