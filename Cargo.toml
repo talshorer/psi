@@ -1,6 +1,21 @@
-[package]
-name = "psi"
+[workspace]
+resolver = "3"
+members = [
+    "psi",
+    "psi-map",
+]
+
+[workspace.package]
 version = "0.1.0"
 edition = "2024"
+authors = ["Tal Shorer <tal.shorer@gmail.com>"]
+license = "MIT"
+repository = "TODO"
+homepage = "TODO"
+description = "TODO"
+readme = "TODO"
 
-[dependencies]
+[workspace.dependencies]
+either = "1.18.0"
+enum-map = "3.1.0"
+thiserror = "2.0.20"

@@ -1,0 +1,178 @@
+use super::{LayoutData, ValidatedLayoutData};
+
+pub static A: ValidatedLayoutData = ValidatedLayoutData::validate(&LayoutData {
+    envelope: &[1, 6, 8, 7, 5, 4, 3],
+    boundaries: (&[2, 4], &[3], &[1, 2, 4]),
+    internal_adjacencies: &[
+        (1, 2),
+        (1, 4),
+        (1, 5),
+        (1, 6),
+        (2, 3),
+        (2, 4),
+        (3, 4),
+        (4, 5),
+        (5, 6),
+        (5, 7),
+        (5, 8),
+        (6, 8),
+        (7, 8),
+    ],
+    terrains: &['M', 'W', 'J', 'S', 'W', 'M', 'S', 'J'],
+})
+.unwrap();
+pub static B: ValidatedLayoutData = ValidatedLayoutData::validate(&LayoutData {
+    envelope: &[1, 6, 8, 7, 4, 3],
+    boundaries: (&[1, 4], &[3], &[1, 3]),
+    internal_adjacencies: &[
+        (1, 2),
+        (1, 4),
+        (1, 5),
+        (1, 6),
+        (2, 3),
+        (2, 4),
+        (3, 4),
+        (4, 5),
+        (4, 7),
+        (5, 6),
+        (5, 7),
+        (6, 7),
+        (6, 8),
+        (7, 8),
+    ],
+    terrains: &['W', 'M', 'S', 'J', 'S', 'W', 'M', 'J'],
+})
+.unwrap();
+pub static C: ValidatedLayoutData = ValidatedLayoutData::validate(&LayoutData {
+    envelope: &[1, 6, 8, 7, 4, 3],
+    boundaries: (&[2, 4], &[4, 6], &[4]),
+    internal_adjacencies: &[
+        (1, 2),
+        (1, 5),
+        (1, 6),
+        (2, 3),
+        (2, 4),
+        (2, 5),
+        (3, 4),
+        (4, 5),
+        (4, 7),
+        (5, 6),
+        (5, 7),
+        (6, 7),
+        (6, 8),
+        (7, 8),
+    ],
+    terrains: &['J', 'S', 'M', 'J', 'W', 'S', 'M', 'W'],
+})
+.unwrap();
+pub static D: ValidatedLayoutData = ValidatedLayoutData::validate(&LayoutData {
+    envelope: &[1, 8, 7, 6, 4, 3],
+    boundaries: (&[6], &[3, 6], &[2, 5]),
+    internal_adjacencies: &[
+        (1, 2),
+        (1, 5),
+        (1, 7),
+        (1, 8),
+        (2, 3),
+        (2, 4),
+        (2, 5),
+        (3, 4),
+        (4, 5),
+        (4, 6),
+        (5, 6),
+        (5, 7),
+        (6, 7),
+        (7, 8),
+    ],
+    terrains: &['W', 'J', 'W', 'S', 'M', 'J', 'S', 'M'],
+})
+.unwrap();
+pub static E: ValidatedLayoutData = ValidatedLayoutData::validate(&LayoutData {
+    envelope: &[1, 7, 8, 6, 4, 3],
+    boundaries: (&[3, 5], &[5], &[1, 4]),
+    internal_adjacencies: &[
+        (1, 2),
+        (1, 5),
+        (1, 7),
+        (2, 3),
+        (2, 5),
+        (3, 4),
+        (3, 5),
+        (4, 5),
+        (4, 6),
+        (4, 7),
+        (5, 7),
+        (6, 7),
+        (6, 8),
+        (7, 8),
+    ],
+    terrains: &['S', 'M', 'J', 'W', 'M', 'S', 'J', 'W'],
+})
+.unwrap();
+pub static F: ValidatedLayoutData = ValidatedLayoutData::validate(&LayoutData {
+    envelope: &[1, 6, 8, 7, 4, 3],
+    boundaries: (&[3, 6], &[4], &[2, 5]),
+    internal_adjacencies: &[
+        (1, 2),
+        (1, 5),
+        (1, 6),
+        (2, 3),
+        (2, 4),
+        (2, 5),
+        (3, 4),
+        (4, 5),
+        (4, 7),
+        (4, 8),
+        (5, 6),
+        (5, 8),
+        (6, 8),
+        (7, 8),
+    ],
+    terrains: &['S', 'J', 'W', 'M', 'J', 'M', 'W', 'S'],
+})
+.unwrap();
+pub static G: ValidatedLayoutData = ValidatedLayoutData::validate(&LayoutData {
+    envelope: &[1, 6, 8, 7, 4, 3],
+    boundaries: (&[3, 5], &[4], &[1, 3]),
+    internal_adjacencies: &[
+        (1, 2),
+        (1, 6),
+        (2, 3),
+        (2, 4),
+        (2, 5),
+        (2, 6),
+        (3, 4),
+        (4, 5),
+        (4, 7),
+        (5, 6),
+        (5, 7),
+        (5, 8),
+        (6, 8),
+        (7, 8),
+    ],
+    terrains: &['M', 'W', 'S', 'W', 'S', 'J', 'J', 'M'],
+})
+.unwrap();
+pub static H: ValidatedLayoutData = ValidatedLayoutData::validate(&LayoutData {
+    envelope: &[1, 8, 7, 4, 3],
+    boundaries: (&[4], &[2, 6], &[4]),
+    internal_adjacencies: &[
+        (1, 2),
+        (1, 6),
+        (1, 8),
+        (2, 3),
+        (2, 5),
+        (2, 6),
+        (3, 4),
+        (3, 5),
+        (4, 5),
+        (4, 7),
+        (5, 6),
+        (5, 7),
+        (6, 7),
+        (6, 8),
+        (7, 8),
+    ],
+    terrains: &['J', 'S', 'M', 'M', 'J', 'W', 'W', 'S'],
+})
+.unwrap();
