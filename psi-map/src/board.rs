@@ -12,7 +12,7 @@ use crate::layout::{
     CLOCKWISE, COUNTER_CLOCKWISE, Corner, Edge, LandNum, Layout, LayoutEdge, Rotate, Terrain,
 };
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 pub struct Distance(pub usize);
 
 struct LandLink {
