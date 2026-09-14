@@ -58,7 +58,7 @@ impl Land {
         other.link_one_way(self, distance);
     }
 
-    pub fn links(&self) -> impl Iterator<Item = (Rc<Land>, Distance)> {
+    fn links_inner(&self) -> <Vec<(Rc<Land>, Distance)> as IntoIterator>::IntoIter {
         self.0
             .borrow()
             .links
@@ -66,6 +66,10 @@ impl Land {
             .filter_map(|link| link.land.upgrade().map(|rc| (rc, link.distance)))
             .collect::<Vec<_>>()
             .into_iter()
+    }
+
+    pub fn links(&self) -> impl Iterator<Item = (Rc<Land>, Distance)> {
+        self.links_inner()
     }
 
     pub fn key(&self) -> LandKey {
@@ -164,6 +168,21 @@ impl Board {
         self.0.borrow().neighbours[edge]
             .as_ref()
             .and_then(|(weak_board, edge)| weak_board.upgrade().map(|board| board.edge(*edge)))
+    }
+
+    pub fn ocean(self: &Rc<Self>) -> BoardOcean {
+        BoardOcean(self.clone())
+    }
+
+    fn coastals(&self) -> impl Iterator<Item = Rc<Land>> {
+        let ocean = self.land(LandNum(0)).expect("A board must have an ocean");
+        let key = ocean.key().0;
+        ocean
+            .links_inner()
+            .filter_map(move |(land, distance)| {
+                (land.key().0 == key && distance == Distance(1)).then_some(land)
+            })
+            .chain(Some(ocean))
     }
 }
 
@@ -276,5 +295,17 @@ impl Deref for BoardEdgeLayoutRef {
 
     fn deref(&self) -> &Self::Target {
         &self.layout.edges[self.edge]
+    }
+}
+
+pub struct BoardOcean(Rc<Board>);
+
+impl BoardOcean {
+    pub fn link(&self, other: &Self) {
+        for self_land in self.0.coastals() {
+            for other_land in other.0.coastals() {
+                self_land.link(&other_land, Distance(2));
+            }
+        }
     }
 }
