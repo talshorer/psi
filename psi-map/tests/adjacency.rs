@@ -7,8 +7,8 @@ fn compare_adjacencies(map: Map, expected: &[(&str, &[&str])]) -> Result<(), Box
         map.boards().map(|b| b.lands().count()).sum::<usize>(),
         expected.len(),
     );
-    for (key, neighbors) in expected {
-        let expected_neighours = neighbors
+    for (key, neighbours) in expected {
+        let expected_neighbours = neighbours
             .iter()
             .copied()
             .map(|s| s.parse().unwrap())
@@ -20,7 +20,7 @@ fn compare_adjacencies(map: Map, expected: &[(&str, &[&str])]) -> Result<(), Box
             .collect::<HashSet<_>>();
         assert_eq!(
             actual_neighbours,
-            expected_neighours,
+            expected_neighbours,
             "Neighbours mismatch for land {:?}",
             land.key()
         );
