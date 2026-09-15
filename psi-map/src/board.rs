@@ -37,6 +37,7 @@ struct LandInner {
     key: LandKey,
     links: HashMap<LandKey, LandLink>,
     terrain: Terrain,
+    board: Weak<Board>,
 }
 
 pub struct Land(RefCell<LandInner>);
@@ -79,6 +80,21 @@ impl Land {
     pub fn terrain(&self) -> Terrain {
         self.0.borrow().terrain
     }
+
+    fn unlink(&self, key: &LandKey) {
+        self.0.borrow_mut().links.remove(key);
+    }
+
+    pub fn cast_down(&self) {
+        let key = self.key();
+        for (land, _) in self.links() {
+            land.unlink(&key);
+            self.unlink(&land.key());
+        }
+        if let Some(board) = self.0.borrow().board.upgrade() {
+            board.0.borrow_mut().lands.remove(&key.1);
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
@@ -111,6 +127,7 @@ impl Board {
             layout: layout.clone(),
             neighbours: EnumMap::default(),
         })));
+        let weak = Rc::downgrade(&rc);
         let mut inner = rc.0.borrow_mut();
 
         for (land, terrain) in layout.terrains.iter() {
@@ -120,6 +137,7 @@ impl Board {
                     key: LandKey(key.clone(), *land),
                     links: HashMap::new(),
                     terrain: *terrain,
+                    board: weak.clone(),
                 }))),
             );
         }
@@ -155,7 +173,7 @@ impl Board {
             .into_iter()
     }
 
-    pub(crate) fn land(&self, num: LandNum) -> Option<Rc<Land>> {
+    pub fn land(&self, num: LandNum) -> Option<Rc<Land>> {
         self.0.borrow().land(num)
     }
 

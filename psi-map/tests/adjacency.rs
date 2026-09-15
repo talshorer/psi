@@ -1,6 +1,10 @@
 use std::{collections::HashSet, error::Error};
 
-use psi_map::{Map, board::Distance, layout::Edge};
+use psi_map::{
+    Map,
+    board::Distance,
+    layout::{Edge, LandNum},
+};
 
 fn compare_adjacencies(
     map: Map,
@@ -260,6 +264,38 @@ fn adjacencies_4p_archipelago() -> Result<(), Box<dyn Error>> {
             ("H6", (&["H1", "H2", "H5", "H7", "H8"], &[])),
             ("H7", (&["H8", "H4", "H5", "H6"], &[])),
             ("H8", (&["H1", "H6", "H7"], &[])),
+        ],
+    )
+}
+
+#[test]
+fn adjacencies_2p_standard_cast_down() -> Result<(), Box<dyn Error>> {
+    let mut map = Map::new();
+    let c = map.add_board("C".into(), psi_map::layout::data::C.layout());
+    let e = map.add_board("E".into(), psi_map::layout::data::E.layout());
+    c.edge(Edge::Clock9).link(&e.edge(Edge::Clock9))?;
+    c.land(LandNum(3)).unwrap().cast_down();
+
+    compare_adjacencies(
+        map,
+        &[
+            ("C0", (&["C1", "C2"], &[])),
+            ("C1", (&["C2", "C5", "C6", "C0"], &[])),
+            ("C2", (&["C1", "C4", "C5", "C0"], &[])),
+            ("C4", (&["C2", "C5", "C7", "E3", "E4"], &[])),
+            ("C5", (&["C1", "C2", "C4", "C6", "C7"], &[])),
+            ("C6", (&["C8", "C1", "C5", "C7"], &[])),
+            ("C7", (&["C8", "C4", "C5", "C6"], &[])),
+            ("C8", (&["C6", "C7"], &[])),
+            ("E0", (&["E1", "E2", "E3"], &[])),
+            ("E1", (&["E2", "E5", "E7", "E0"], &[])),
+            ("E2", (&["E1", "E3", "E5", "E0"], &[])),
+            ("E3", (&["E2", "E4", "E5", "E0", "C4"], &[])),
+            ("E4", (&["E3", "E5", "E6", "E7", "C4"], &[])),
+            ("E5", (&["E1", "E2", "E3", "E4", "E7"], &[])),
+            ("E6", (&["E8", "E4", "E7"], &[])),
+            ("E7", (&["E1", "E4", "E5", "E6", "E8"], &[])),
+            ("E8", (&["E6", "E7"], &[])),
         ],
     )
 }

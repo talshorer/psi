@@ -213,7 +213,7 @@ pub(crate) static COUNTER_CLOCKWISE: LazyLock<Rotate> = LazyLock::new(|| Rotate 
 });
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
-pub struct LandNum(pub(crate) usize);
+pub struct LandNum(pub usize);
 
 pub(crate) struct LayoutEdge {
     pub(crate) lands: Vec<LandNum>,
