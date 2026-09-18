@@ -2,7 +2,6 @@ use std::{collections::HashSet, error::Error};
 
 use psi_map::{
     LayoutCache, Map,
-    board::Distance,
     layout::{Edge, LandNum},
 };
 
