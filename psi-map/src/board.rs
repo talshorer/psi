@@ -8,8 +8,11 @@ use std::{
 
 use enum_map::EnumMap;
 
-use crate::layout::{
-    CLOCKWISE, COUNTER_CLOCKWISE, Corner, Edge, LandNum, Layout, LayoutEdge, Rotate, Terrain,
+use crate::{
+    Map,
+    layout::{
+        CLOCKWISE, COUNTER_CLOCKWISE, Corner, Edge, LandNum, Layout, LayoutEdge, Rotate, Terrain,
+    },
 };
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
@@ -115,16 +118,18 @@ impl BoardInner {
 pub struct Board {
     inner: RefCell<BoardInner>,
     layout: Rc<Layout>,
+    map: Weak<Map>,
 }
 
 impl Board {
-    pub(crate) fn new(key: BoardKey, layout: Rc<Layout>) -> Rc<Self> {
+    pub(crate) fn new(map: Weak<Map>, key: BoardKey, layout: Rc<Layout>) -> Rc<Self> {
         let rc = Rc::new(Self {
             inner: RefCell::new(BoardInner {
                 lands: HashMap::new(),
                 neighbours: EnumMap::default(),
             }),
             layout: layout.clone(),
+            map,
         });
         let weak = Rc::downgrade(&rc);
         let mut inner = rc.inner.borrow_mut();
@@ -220,6 +225,10 @@ pub enum BoardEdgeLinkError {
 
 impl BoardEdge {
     pub fn link(&self, other: &Self) -> Result<(), BoardEdgeLinkError> {
+        let true = self.board.map.ptr_eq(&other.board.map) else {
+            return Err(BoardEdgeLinkError::MapMismatch);
+        };
+
         let self_entry = BoardEdgeEntry::new(self).ok_or(BoardEdgeLinkError::OccupiedSelf)?;
         let other_entry = BoardEdgeEntry::new(other).ok_or(BoardEdgeLinkError::OccupiedOther)?;
         self_entry.link(other_entry);

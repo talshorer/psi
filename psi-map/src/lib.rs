@@ -19,7 +19,7 @@ impl Map {
     }
 
     pub fn add_board(self: &Rc<Self>, key: BoardKey, layout: Rc<Layout>) -> Rc<Board> {
-        let board = Board::new(key.clone(), layout);
+        let board = Board::new(Rc::downgrade(self), key.clone(), layout);
         self.0.borrow_mut().boards.insert(key, board.clone());
         board
     }
