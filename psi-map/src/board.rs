@@ -33,21 +33,18 @@ impl FromStr for LandKey {
     }
 }
 
-struct LandInner {
+pub struct Land {
     key: LandKey,
-    links: HashMap<LandKey, LandLink>,
+    links: RefCell<HashMap<LandKey, LandLink>>,
     terrain: Terrain,
     board: Weak<Board>,
 }
 
-pub struct Land(RefCell<LandInner>);
-
 impl Land {
     fn link_one_way(self: &Rc<Self>, other: &Rc<Self>, distance: Distance) {
-        self.0
+        self.links
             .borrow_mut()
-            .links
-            .entry(other.0.borrow().key.clone())
+            .entry(other.key.clone())
             .or_insert(LandLink {
                 land: Rc::downgrade(other),
                 distance,
@@ -60,9 +57,8 @@ impl Land {
     }
 
     fn links_inner(&self) -> <Vec<(Rc<Land>, Distance)> as IntoIterator>::IntoIter {
-        self.0
+        self.links
             .borrow()
-            .links
             .values()
             .filter_map(|link| link.land.upgrade().map(|rc| (rc, link.distance)))
             .collect::<Vec<_>>()
@@ -74,25 +70,24 @@ impl Land {
     }
 
     pub fn key(&self) -> LandKey {
-        self.0.borrow().key.clone()
+        self.key.clone()
     }
 
     pub fn terrain(&self) -> Terrain {
-        self.0.borrow().terrain
+        self.terrain
     }
 
     fn unlink(&self, key: &LandKey) {
-        self.0.borrow_mut().links.remove(key);
+        self.links.borrow_mut().remove(key);
     }
 
     pub fn cast_down(&self) {
-        let key = self.key();
         for (land, _) in self.links() {
-            land.unlink(&key);
-            self.unlink(&land.key());
+            land.unlink(&self.key);
+            self.unlink(&land.key);
         }
-        if let Some(board) = self.0.borrow().board.upgrade() {
-            board.0.borrow_mut().lands.remove(&key.1);
+        if let Some(board) = self.board.upgrade() {
+            board.0.borrow_mut().lands.remove(&self.key.1);
         }
     }
 }
@@ -133,12 +128,12 @@ impl Board {
         for (land, terrain) in layout.terrains.iter() {
             inner.lands.insert(
                 *land,
-                Rc::new(Land(RefCell::new(LandInner {
+                Rc::new(Land {
                     key: LandKey(key.clone(), *land),
-                    links: HashMap::new(),
+                    links: Default::default(),
                     terrain: *terrain,
                     board: weak.clone(),
-                }))),
+                }),
             );
         }
 
@@ -194,11 +189,11 @@ impl Board {
 
     fn coastals(&self) -> impl Iterator<Item = Rc<Land>> {
         let ocean = self.land(LandNum(0)).expect("A board must have an ocean");
-        let key = ocean.key().0;
+        let ocean_key = ocean.key.0.clone();
         ocean
             .links_inner()
             .filter_map(move |(land, distance)| {
-                (land.key().0 == key && distance == Distance(1)).then_some(land)
+                (land.key.0 == ocean_key && distance == Distance(1)).then_some(land)
             })
             .chain(Some(ocean))
     }
@@ -250,13 +245,12 @@ impl BoardEdge {
 
     fn link_corners_one_way_inner(&self, other: &Self, rotate: &Rotate) -> Option<()> {
         let land = other.corner(rotate.reverse())?;
-        let sentinel = land.key();
         let mut cur = self.clone();
         loop {
             let rotated_edge = rotate.to_edge(cur.edge)?;
             let other_edge = cur.board.neighbour(rotated_edge)?;
             let other_corner = other_edge.corner(rotate)?;
-            if other_corner.key() == sentinel {
+            if other_corner.key == land.key {
                 return None;
             }
             land.link(&other_corner, Distance(1));
