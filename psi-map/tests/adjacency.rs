@@ -7,7 +7,7 @@ use psi_map::{
 };
 
 fn compare_adjacencies(
-    map: Map,
+    map: &Map,
     expected: &[(&str, (&[&str], &[&str]))],
 ) -> Result<(), Box<dyn Error>> {
     assert_eq!(
@@ -41,7 +41,7 @@ fn compare_adjacencies(
 
 #[test]
 fn adjacencies_3p_standard() -> Result<(), Box<dyn Error>> {
-    let mut map = Map::new();
+    let map = Map::new();
     let a = map.add_board("A".into(), psi_map::layout::data::A.layout());
     let b = map.add_board("B".into(), psi_map::layout::data::B.layout());
     let c = map.add_board("C".into(), psi_map::layout::data::C.layout());
@@ -50,7 +50,7 @@ fn adjacencies_3p_standard() -> Result<(), Box<dyn Error>> {
     c.edge(Edge::Clock6).link(&a.edge(Edge::Clock9))?;
 
     compare_adjacencies(
-        map,
+        &map,
         &[
             ("A0", (&["A1", "A2", "A3"], &[])),
             ("A1", (&["A0", "A2", "A4", "A5", "A6"], &[])),
@@ -85,7 +85,7 @@ fn adjacencies_3p_standard() -> Result<(), Box<dyn Error>> {
 
 #[test]
 fn adjacencies_6p_star() -> Result<(), Box<dyn Error>> {
-    let mut map = Map::new();
+    let map = Map::new();
     let a = map.add_board("A".into(), psi_map::layout::data::A.layout());
     let b = map.add_board("B".into(), psi_map::layout::data::B.layout());
     let c = map.add_board("C".into(), psi_map::layout::data::C.layout());
@@ -100,7 +100,7 @@ fn adjacencies_6p_star() -> Result<(), Box<dyn Error>> {
     f.edge(Edge::Clock6).link(&a.edge(Edge::Clock3))?;
 
     compare_adjacencies(
-        map,
+        &map,
         &[
             ("A0", (&["A1", "A2", "A3"], &[])),
             ("A1", (&["A0", "A2", "A4", "A5", "A6", "F7"], &[])),
@@ -188,7 +188,7 @@ fn adjacencies_6p_star() -> Result<(), Box<dyn Error>> {
 fn adjacencies_4p_archipelago() -> Result<(), Box<dyn Error>> {
     // E-> <-H
     // F-> <-G
-    let mut map = Map::new();
+    let map = Map::new();
     let e = map.add_board("E".into(), psi_map::layout::data::E.layout());
     let f = map.add_board("F".into(), psi_map::layout::data::F.layout());
     let g = map.add_board("G".into(), psi_map::layout::data::G.layout());
@@ -199,7 +199,7 @@ fn adjacencies_4p_archipelago() -> Result<(), Box<dyn Error>> {
     f.ocean().link(&g.ocean());
 
     compare_adjacencies(
-        map,
+        &map,
         &[
             ("E0", (&["E1", "E2", "E3"], &["H0", "H1", "H2", "H3"])),
             (
@@ -270,14 +270,14 @@ fn adjacencies_4p_archipelago() -> Result<(), Box<dyn Error>> {
 
 #[test]
 fn adjacencies_2p_standard_cast_down() -> Result<(), Box<dyn Error>> {
-    let mut map = Map::new();
+    let map = Map::new();
     let c = map.add_board("C".into(), psi_map::layout::data::C.layout());
     let e = map.add_board("E".into(), psi_map::layout::data::E.layout());
     c.edge(Edge::Clock9).link(&e.edge(Edge::Clock9))?;
     c.land(LandNum(3)).unwrap().cast_down();
 
     compare_adjacencies(
-        map,
+        &map,
         &[
             ("C0", (&["C1", "C2"], &[])),
             ("C1", (&["C2", "C5", "C6", "C0"], &[])),
