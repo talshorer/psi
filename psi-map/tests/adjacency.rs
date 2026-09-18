@@ -6,9 +6,19 @@ use psi_map::{
     layout::{Edge, LandNum},
 };
 
+type CompareAdjaceciesLandKey<'a> = &'a str;
+type CompareAdjaceciesExpectedSingleLandLinks<'a> = (
+    &'a [CompareAdjaceciesLandKey<'a>], // lands at distance 1, adjacent
+    &'a [CompareAdjaceciesLandKey<'a>], // lands at distance 2, archipelago links
+);
+type CompareAdjaceciesExpectedSingleLand<'a> = (
+    CompareAdjaceciesLandKey<'a>,                 // land
+    CompareAdjaceciesExpectedSingleLandLinks<'a>, // its links
+);
+
 fn compare_adjacencies(
     map: &Map,
-    expected: &[(&str, (&[&str], &[&str]))],
+    expected: &[CompareAdjaceciesExpectedSingleLand],
 ) -> Result<(), Box<dyn Error>> {
     assert_eq!(
         map.boards().map(|b| b.lands().count()).sum::<usize>(),
