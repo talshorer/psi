@@ -1,6 +1,6 @@
 use std::{
     cell::{RefCell, RefMut},
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     ops::Deref,
     rc::{Rc, Weak},
     str::FromStr,
@@ -84,13 +84,35 @@ impl Land {
         self.links.borrow_mut().remove(key);
     }
 
-    pub fn cast_down(&self) {
-        for (land, _) in self.links() {
+    fn destroy_inner(&self, f: impl Fn(&Rc<Self>, Distance)) {
+        for (land, distance) in self.links() {
+            f(&land, distance);
             land.unlink(&self.key);
             self.unlink(&land.key);
         }
         if let Some(board) = self.board.upgrade() {
             board.inner.borrow_mut().lands.remove(&self.key.1);
+        }
+    }
+
+    pub fn cast_down(&self) {
+        self.destroy_inner(|_, _| ())
+    }
+
+    pub fn sink(&self) {
+        let board = self.board.upgrade();
+        let ocean = board.as_deref().and_then(|board| board.land(LandNum(0)));
+        self.destroy_inner(|land, distance| {
+            if distance == Distance(1)
+                && let Some(ocean) = ocean.as_ref()
+            {
+                ocean.link(land, Distance(1));
+            }
+        });
+        if let Some(board) = board {
+            for linked_board in board.archipelago_links() {
+                board.ocean().link(&linked_board.ocean());
+            }
         }
     }
 }
@@ -104,9 +126,28 @@ impl From<&str> for BoardKey {
     }
 }
 
+#[derive(Default)]
+struct BoardArchipelagoLinks {
+    vec: Vec<Weak<Board>>,
+    set: HashSet<BoardKey>,
+}
+
+impl BoardArchipelagoLinks {
+    fn iter(&self) -> impl Iterator<Item = Rc<Board>> {
+        self.vec.iter().filter_map(Weak::upgrade)
+    }
+
+    fn push(&mut self, other: &Rc<Board>) {
+        if self.set.insert(other.key.clone()) {
+            self.vec.push(Rc::downgrade(other));
+        }
+    }
+}
+
 struct BoardInner {
     lands: HashMap<LandNum, Rc<Land>>,
     neighbours: EnumMap<Edge, Option<(Weak<Board>, Edge)>>,
+    archipelago_links: BoardArchipelagoLinks,
 }
 
 impl BoardInner {
@@ -129,6 +170,7 @@ impl Board {
             inner: RefCell::new(BoardInner {
                 lands: HashMap::new(),
                 neighbours: EnumMap::default(),
+                archipelago_links: Default::default(),
             }),
             layout: layout.clone(),
             map,
@@ -216,6 +258,10 @@ impl Board {
             let removed = map.remove_board(&self.key);
             debug_assert!(removed);
         }
+    }
+
+    fn archipelago_links(&self) -> Vec<Rc<Board>> {
+        self.inner.borrow().archipelago_links.iter().collect()
     }
 }
 
@@ -336,11 +382,32 @@ impl Deref for BoardEdgeLayoutRef {
 pub struct BoardOcean(Rc<Board>);
 
 impl BoardOcean {
+    fn link_one_way(&self, other: &Self) {
+        self.0.inner.borrow_mut().archipelago_links.push(&other.0)
+    }
+
     pub fn link(&self, other: &Self) {
         for self_land in self.0.coastals() {
             for other_land in other.0.coastals() {
                 self_land.link(&other_land, Distance(2));
             }
         }
+        self.link_one_way(other);
+        other.link_one_way(self);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn double_archipelago_link_inserts_once() {
+        let map = Map::new();
+        let a = map.add_board("A".into(), crate::layout::data::A.layout());
+        let b = map.add_board("B".into(), crate::layout::data::B.layout());
+        a.ocean().link(&b.ocean());
+        a.ocean().link(&b.ocean());
+        assert_eq!(a.archipelago_links().len(), 1);
     }
 }

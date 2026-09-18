@@ -348,3 +348,118 @@ fn adjacencies_2p_standard_cast_down_board() -> Result<(), Box<dyn Error>> {
         ],
     )
 }
+
+#[test]
+fn adjacencies_1p_deeps_coastal() -> Result<(), Box<dyn Error>> {
+    let map = Map::new();
+    let g = map.add_board("G".into(), psi_map::layout::data::G.layout());
+    g.land(LandNum(1)).unwrap().sink();
+
+    compare_adjacencies(
+        &map,
+        &[
+            ("G0", (&["G2", "G3", "G6", "G0"], &[])),
+            ("G2", (&["G3", "G4", "G5", "G6", "G0"], &[])),
+            ("G3", (&["G2", "G4", "G0"], &[])),
+            ("G4", (&["G2", "G3", "G5", "G7"], &[])),
+            ("G5", (&["G2", "G4", "G6", "G7", "G8"], &[])),
+            ("G6", (&["G8", "G2", "G5", "G0"], &[])),
+            ("G7", (&["G8", "G4", "G5"], &[])),
+            ("G8", (&["G5", "G6", "G7"], &[])),
+        ],
+    )
+}
+
+#[test]
+fn adjacencies_1p_deeps_inland() -> Result<(), Box<dyn Error>> {
+    let map = Map::new();
+    let g = map.add_board("G".into(), psi_map::layout::data::G.layout());
+    g.land(LandNum(7)).unwrap().sink();
+
+    compare_adjacencies(
+        &map,
+        &[
+            ("G0", (&["G1", "G2", "G3", "G8", "G4", "G5"], &[])),
+            ("G1", (&["G2", "G6", "G0"], &[])),
+            ("G2", (&["G1", "G3", "G4", "G5", "G6", "G0"], &[])),
+            ("G3", (&["G2", "G4", "G0"], &[])),
+            ("G4", (&["G2", "G3", "G5", "G0"], &[])),
+            ("G5", (&["G2", "G4", "G6", "G8", "G0"], &[])),
+            ("G6", (&["G8", "G1", "G2", "G5"], &[])),
+            ("G8", (&["G5", "G6", "G0"], &[])),
+        ],
+    )
+}
+
+#[test]
+fn adjacencies_2p_standard_deeps_join_oceans() -> Result<(), Box<dyn Error>> {
+    let map = Map::new();
+    let g = map.add_board("G".into(), psi_map::layout::data::G.layout());
+    let h = map.add_board("H".into(), psi_map::layout::data::H.layout());
+    g.edge(Edge::Clock9).link(&h.edge(Edge::Clock9))?;
+    g.land(LandNum(3)).unwrap().sink();
+    h.land(LandNum(3)).unwrap().sink();
+
+    compare_adjacencies(
+        &map,
+        &[
+            ("G0", (&["G1", "G2", "G4", "G0", "H4", "H0"], &[])),
+            ("G1", (&["G2", "G6", "G0"], &[])),
+            ("G2", (&["G1", "G4", "G5", "G6", "G0"], &[])),
+            ("G4", (&["G2", "G5", "G7", "G0", "H0"], &[])),
+            ("G5", (&["G2", "G4", "G6", "G7", "G8"], &[])),
+            ("G6", (&["G8", "G1", "G2", "G5"], &[])),
+            ("G7", (&["G8", "G4", "G5", "H0"], &[])),
+            ("G8", (&["G5", "G6", "G7"], &[])),
+            (
+                "H0",
+                (&["H1", "H2", "H4", "H5", "H0", "G7", "G4", "G0"], &[]),
+            ),
+            ("H1", (&["H8", "H2", "H6", "H0"], &[])),
+            ("H2", (&["H1", "H5", "H6", "H0"], &[])),
+            ("H4", (&["H5", "H7", "G0", "H0"], &[])),
+            ("H5", (&["H2", "H4", "H6", "H7", "H0"], &[])),
+            ("H6", (&["H1", "H2", "H5", "H7", "H8"], &[])),
+            ("H7", (&["H8", "H4", "H5", "H6"], &[])),
+            ("H8", (&["H1", "H6", "H7"], &[])),
+        ],
+    )
+}
+
+#[test]
+fn adjacencies_2p_archipelago_deeps() -> Result<(), Box<dyn Error>> {
+    let map = Map::new();
+    let g = map.add_board("G".into(), psi_map::layout::data::G.layout());
+    let h = map.add_board("H".into(), psi_map::layout::data::H.layout());
+    g.ocean().link(&h.ocean());
+    g.land(LandNum(1)).unwrap().sink();
+
+    compare_adjacencies(
+        &map,
+        &[
+            ("G0", (&["G2", "G3", "G6", "G0"], &["H0", "H1", "H2", "H3"])),
+            (
+                "G2",
+                (&["G3", "G4", "G5", "G6", "G0"], &["H0", "H1", "H2", "H3"]),
+            ),
+            ("G3", (&["G2", "G4", "G0"], &["H0", "H1", "H2", "H3"])),
+            ("G4", (&["G2", "G3", "G5", "G7"], &[])),
+            ("G5", (&["G2", "G4", "G6", "G7", "G8"], &[])),
+            ("G6", (&["G8", "G2", "G5", "G0"], &["H0", "H1", "H2", "H3"])),
+            ("G7", (&["G8", "G4", "G5"], &[])),
+            ("G8", (&["G5", "G6", "G7"], &[])),
+            ("H0", (&["H1", "H2", "H3"], &["G0", "G2", "G3", "G6"])),
+            ("H1", (&["H8", "H2", "H6", "H0"], &["G0", "G2", "G3", "G6"])),
+            (
+                "H2",
+                (&["H1", "H3", "H5", "H6", "H0"], &["G0", "G2", "G3", "G6"]),
+            ),
+            ("H3", (&["H2", "H4", "H5", "H0"], &["G0", "G2", "G3", "G6"])),
+            ("H4", (&["H3", "H5", "H7"], &[])),
+            ("H5", (&["H2", "H3", "H4", "H6", "H7"], &[])),
+            ("H6", (&["H1", "H2", "H5", "H7", "H8"], &[])),
+            ("H7", (&["H8", "H4", "H5", "H6"], &[])),
+            ("H8", (&["H1", "H6", "H7"], &[])),
+        ],
+    )
+}
