@@ -87,7 +87,7 @@ impl Land {
             self.unlink(&land.key);
         }
         if let Some(board) = self.board.upgrade() {
-            board.0.borrow_mut().lands.remove(&self.key.1);
+            board.inner.borrow_mut().lands.remove(&self.key.1);
         }
     }
 }
@@ -103,7 +103,6 @@ impl From<&str> for BoardKey {
 
 struct BoardInner {
     lands: HashMap<LandNum, Rc<Land>>,
-    layout: Rc<Layout>,
     neighbours: EnumMap<Edge, Option<(Weak<Board>, Edge)>>,
 }
 
@@ -113,17 +112,22 @@ impl BoardInner {
     }
 }
 
-pub struct Board(RefCell<BoardInner>);
+pub struct Board {
+    inner: RefCell<BoardInner>,
+    layout: Rc<Layout>,
+}
 
 impl Board {
     pub(crate) fn new(key: BoardKey, layout: Rc<Layout>) -> Rc<Self> {
-        let rc = Rc::new(Self(RefCell::new(BoardInner {
-            lands: HashMap::new(),
+        let rc = Rc::new(Self {
+            inner: RefCell::new(BoardInner {
+                lands: HashMap::new(),
+                neighbours: EnumMap::default(),
+            }),
             layout: layout.clone(),
-            neighbours: EnumMap::default(),
-        })));
+        });
         let weak = Rc::downgrade(&rc);
-        let mut inner = rc.0.borrow_mut();
+        let mut inner = rc.inner.borrow_mut();
 
         for (land, terrain) in layout.terrains.iter() {
             inner.lands.insert(
@@ -159,7 +163,7 @@ impl Board {
     }
 
     pub fn lands(&self) -> impl Iterator<Item = Rc<Land>> {
-        self.0
+        self.inner
             .borrow()
             .lands
             .values()
@@ -169,16 +173,15 @@ impl Board {
     }
 
     pub fn land(&self, num: LandNum) -> Option<Rc<Land>> {
-        self.0.borrow().land(num)
+        self.inner.borrow().land(num)
     }
 
     fn corner(&self, corner: Corner) -> Option<Rc<Land>> {
-        let inner = self.0.borrow();
-        inner.land(inner.layout.corner(corner))
+        self.inner.borrow().land(self.layout.corner(corner))
     }
 
     fn neighbour(&self, edge: Edge) -> Option<BoardEdge> {
-        self.0.borrow().neighbours[edge]
+        self.inner.borrow().neighbours[edge]
             .as_ref()
             .and_then(|(weak_board, edge)| weak_board.upgrade().map(|board| board.edge(*edge)))
     }
@@ -225,8 +228,8 @@ impl BoardEdge {
         let other_layout = BoardEdgeLayoutRef::new(other);
 
         for (self_land_num, other_land_num) in self_layout.link_iter(&other_layout) {
-            if let Some(self_land) = self.board.0.borrow().lands.get(&self_land_num)
-                && let Some(other_land) = other.board.0.borrow().lands.get(&other_land_num)
+            if let Some(self_land) = self.board.inner.borrow().lands.get(&self_land_num)
+                && let Some(other_land) = other.board.inner.borrow().lands.get(&other_land_num)
             {
                 self_land.link(other_land, Distance(1));
             }
@@ -270,7 +273,7 @@ struct BoardEdgeEntry<'a> {
 
 impl<'a> BoardEdgeEntry<'a> {
     fn new(inner: &'a BoardEdge) -> Option<Self> {
-        let borrow = inner.board.0.borrow_mut();
+        let borrow = inner.board.inner.borrow_mut();
         borrow.neighbours[inner.edge]
             .is_none()
             .then(|| Self { inner, borrow })
@@ -294,9 +297,8 @@ struct BoardEdgeLayoutRef {
 
 impl BoardEdgeLayoutRef {
     fn new(edge: &BoardEdge) -> Self {
-        let layout = edge.board.0.borrow().layout.clone();
         Self {
-            layout,
+            layout: edge.board.layout.clone(),
             edge: edge.edge,
         }
     }
