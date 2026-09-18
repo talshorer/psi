@@ -28,15 +28,13 @@ fn compare_adjacencies(
         let expected_neighbours = [(links.0, 1), (links.1, 2)]
             .into_iter()
             .flat_map(|(lands, distance)| {
-                lands
-                    .iter()
-                    .map(move |land| (land.parse().unwrap(), Distance(distance)))
+                lands.iter().map(move |land| (land.to_string(), distance))
             })
             .collect::<HashSet<_>>();
         let land = map.land(&key.parse().unwrap()).unwrap();
         let actual_neighbours = land
             .links()
-            .map(|(land, distance)| (land.key(), distance))
+            .map(|(land, distance)| (land.key().to_string(), distance.0))
             .collect::<HashSet<_>>();
         assert_eq!(
             actual_neighbours,

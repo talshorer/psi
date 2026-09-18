@@ -1,6 +1,7 @@
 use std::{
     cell::{RefCell, RefMut},
     collections::{HashMap, HashSet},
+    fmt::Display,
     ops::Deref,
     rc::{Rc, Weak},
     str::FromStr,
@@ -33,6 +34,12 @@ impl FromStr for LandKey {
         let (board, land) = s.split_at(s.len() - 1);
         land.parse()
             .map(|land| Self(BoardKey::from(board), LandNum(land)))
+    }
+}
+
+impl Display for LandKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}{}", self.0.0, self.1.0)
     }
 }
 
