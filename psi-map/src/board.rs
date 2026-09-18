@@ -213,7 +213,7 @@ pub struct BoardEdge {
     edge: Edge,
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, PartialEq)]
 pub enum BoardEdgeLinkError {
     #[error("Map mismatch")]
     MapMismatch,
