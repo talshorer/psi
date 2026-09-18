@@ -6,6 +6,8 @@ pub mod layout;
 use board::{Board, BoardKey, Land, LandKey};
 use layout::Layout;
 
+use crate::layout::ValidatedLayoutData;
+
 #[derive(Default)]
 struct MapInner {
     boards: HashMap<BoardKey, Rc<Board>>,
@@ -38,5 +40,21 @@ impl Map {
             .boards
             .get(&key.0)
             .and_then(|board| board.land(key.1))
+    }
+}
+
+pub struct LayoutCache<'a>(RefCell<HashMap<&'a ValidatedLayoutData<'a>, Rc<Layout>>>);
+
+impl<'a> LayoutCache<'a> {
+    pub fn new() -> Rc<Self> {
+        Rc::new(Self(Default::default()))
+    }
+
+    pub fn layout(&self, data: &'a ValidatedLayoutData) -> Rc<Layout> {
+        self.0
+            .borrow_mut()
+            .entry(data)
+            .or_insert(data.layout())
+            .clone()
     }
 }

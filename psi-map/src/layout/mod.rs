@@ -10,6 +10,7 @@ use enum_map::{Enum, EnumMap, enum_map};
 
 pub mod data;
 
+#[derive(Hash, PartialEq, Eq)]
 struct LayoutData<'a> {
     envelope: &'a [usize],
     boundaries: (&'a [usize], &'a [usize], &'a [usize]),
@@ -18,6 +19,7 @@ struct LayoutData<'a> {
     coastals: &'a [usize],
 }
 
+#[derive(Hash, PartialEq, Eq)]
 pub struct ValidatedLayoutData<'a>(&'a LayoutData<'a>);
 
 impl<'a> ValidatedLayoutData<'a> {
@@ -111,7 +113,7 @@ impl<'a> ValidatedLayoutData<'a> {
         }
     }
 
-    pub fn layout(&self) -> Rc<Layout> {
+    pub(crate) fn layout(&self) -> Rc<Layout> {
         Rc::new(Layout::new(self))
     }
 }

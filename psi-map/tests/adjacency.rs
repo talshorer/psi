@@ -1,7 +1,7 @@
 use std::{collections::HashSet, error::Error};
 
 use psi_map::{
-    Map,
+    LayoutCache, Map,
     board::Distance,
     layout::{Edge, LandNum},
 };
@@ -51,10 +51,11 @@ fn compare_adjacencies(
 
 #[test]
 fn adjacencies_3p_standard() -> Result<(), Box<dyn Error>> {
+    let lc = LayoutCache::new();
     let map = Map::new();
-    let a = map.add_board("A".into(), psi_map::layout::data::A.layout());
-    let b = map.add_board("B".into(), psi_map::layout::data::B.layout());
-    let c = map.add_board("C".into(), psi_map::layout::data::C.layout());
+    let a = map.add_board("A".into(), lc.layout(&psi_map::layout::data::A));
+    let b = map.add_board("B".into(), lc.layout(&psi_map::layout::data::B));
+    let c = map.add_board("C".into(), lc.layout(&psi_map::layout::data::C));
     a.edge(Edge::Clock6).link(&b.edge(Edge::Clock9))?;
     b.edge(Edge::Clock6).link(&c.edge(Edge::Clock9))?;
     c.edge(Edge::Clock6).link(&a.edge(Edge::Clock9))?;
@@ -95,13 +96,14 @@ fn adjacencies_3p_standard() -> Result<(), Box<dyn Error>> {
 
 #[test]
 fn adjacencies_6p_star() -> Result<(), Box<dyn Error>> {
+    let lc = LayoutCache::new();
     let map = Map::new();
-    let a = map.add_board("A".into(), psi_map::layout::data::A.layout());
-    let b = map.add_board("B".into(), psi_map::layout::data::B.layout());
-    let c = map.add_board("C".into(), psi_map::layout::data::C.layout());
-    let d = map.add_board("D".into(), psi_map::layout::data::D.layout());
-    let e = map.add_board("E".into(), psi_map::layout::data::E.layout());
-    let f = map.add_board("F".into(), psi_map::layout::data::F.layout());
+    let a = map.add_board("A".into(), lc.layout(&psi_map::layout::data::A));
+    let b = map.add_board("B".into(), lc.layout(&psi_map::layout::data::B));
+    let c = map.add_board("C".into(), lc.layout(&psi_map::layout::data::C));
+    let d = map.add_board("D".into(), lc.layout(&psi_map::layout::data::D));
+    let e = map.add_board("E".into(), lc.layout(&psi_map::layout::data::E));
+    let f = map.add_board("F".into(), lc.layout(&psi_map::layout::data::F));
     a.edge(Edge::Clock6).link(&b.edge(Edge::Clock3))?;
     b.edge(Edge::Clock6).link(&c.edge(Edge::Clock3))?;
     c.edge(Edge::Clock6).link(&d.edge(Edge::Clock3))?;
@@ -198,11 +200,12 @@ fn adjacencies_6p_star() -> Result<(), Box<dyn Error>> {
 fn adjacencies_4p_archipelago() -> Result<(), Box<dyn Error>> {
     // E-> <-H
     // F-> <-G
+    let lc = LayoutCache::new();
     let map = Map::new();
-    let e = map.add_board("E".into(), psi_map::layout::data::E.layout());
-    let f = map.add_board("F".into(), psi_map::layout::data::F.layout());
-    let g = map.add_board("G".into(), psi_map::layout::data::G.layout());
-    let h = map.add_board("H".into(), psi_map::layout::data::H.layout());
+    let e = map.add_board("E".into(), lc.layout(&psi_map::layout::data::E));
+    let f = map.add_board("F".into(), lc.layout(&psi_map::layout::data::F));
+    let g = map.add_board("G".into(), lc.layout(&psi_map::layout::data::G));
+    let h = map.add_board("H".into(), lc.layout(&psi_map::layout::data::H));
     e.edge(Edge::Clock3).link(&f.edge(Edge::Clock9))?;
     g.edge(Edge::Clock3).link(&h.edge(Edge::Clock9))?;
     e.ocean().link(&h.ocean());
@@ -280,9 +283,10 @@ fn adjacencies_4p_archipelago() -> Result<(), Box<dyn Error>> {
 
 #[test]
 fn adjacencies_2p_standard_cast_down_land() -> Result<(), Box<dyn Error>> {
+    let lc = LayoutCache::new();
     let map = Map::new();
-    let c = map.add_board("C".into(), psi_map::layout::data::C.layout());
-    let e = map.add_board("E".into(), psi_map::layout::data::E.layout());
+    let c = map.add_board("C".into(), lc.layout(&psi_map::layout::data::C));
+    let e = map.add_board("E".into(), lc.layout(&psi_map::layout::data::E));
     c.edge(Edge::Clock9).link(&e.edge(Edge::Clock9))?;
     c.land(LandNum(3)).unwrap().cast_down();
 
@@ -312,9 +316,10 @@ fn adjacencies_2p_standard_cast_down_land() -> Result<(), Box<dyn Error>> {
 
 #[test]
 fn adjacencies_2p_standard_cast_down_board() -> Result<(), Box<dyn Error>> {
+    let lc = LayoutCache::new();
     let map = Map::new();
-    let c = map.add_board("C".into(), psi_map::layout::data::C.layout());
-    let e = map.add_board("E".into(), psi_map::layout::data::E.layout());
+    let c = map.add_board("C".into(), lc.layout(&psi_map::layout::data::C));
+    let e = map.add_board("E".into(), lc.layout(&psi_map::layout::data::E));
     c.edge(Edge::Clock9).link(&e.edge(Edge::Clock9))?;
 
     compare_adjacencies(
@@ -361,8 +366,9 @@ fn adjacencies_2p_standard_cast_down_board() -> Result<(), Box<dyn Error>> {
 
 #[test]
 fn adjacencies_1p_deeps_coastal() -> Result<(), Box<dyn Error>> {
+    let lc = LayoutCache::new();
     let map = Map::new();
-    let g = map.add_board("G".into(), psi_map::layout::data::G.layout());
+    let g = map.add_board("G".into(), lc.layout(&psi_map::layout::data::G));
     g.land(LandNum(1)).unwrap().sink();
 
     compare_adjacencies(
@@ -382,8 +388,9 @@ fn adjacencies_1p_deeps_coastal() -> Result<(), Box<dyn Error>> {
 
 #[test]
 fn adjacencies_1p_deeps_inland() -> Result<(), Box<dyn Error>> {
+    let lc = LayoutCache::new();
     let map = Map::new();
-    let g = map.add_board("G".into(), psi_map::layout::data::G.layout());
+    let g = map.add_board("G".into(), lc.layout(&psi_map::layout::data::G));
     g.land(LandNum(7)).unwrap().sink();
 
     compare_adjacencies(
@@ -403,9 +410,10 @@ fn adjacencies_1p_deeps_inland() -> Result<(), Box<dyn Error>> {
 
 #[test]
 fn adjacencies_2p_standard_deeps_join_oceans() -> Result<(), Box<dyn Error>> {
+    let lc = LayoutCache::new();
     let map = Map::new();
-    let g = map.add_board("G".into(), psi_map::layout::data::G.layout());
-    let h = map.add_board("H".into(), psi_map::layout::data::H.layout());
+    let g = map.add_board("G".into(), lc.layout(&psi_map::layout::data::G));
+    let h = map.add_board("H".into(), lc.layout(&psi_map::layout::data::H));
     g.edge(Edge::Clock9).link(&h.edge(Edge::Clock9))?;
     g.land(LandNum(3)).unwrap().sink();
     h.land(LandNum(3)).unwrap().sink();
@@ -438,9 +446,10 @@ fn adjacencies_2p_standard_deeps_join_oceans() -> Result<(), Box<dyn Error>> {
 
 #[test]
 fn adjacencies_2p_archipelago_deeps() -> Result<(), Box<dyn Error>> {
+    let lc = LayoutCache::new();
     let map = Map::new();
-    let g = map.add_board("G".into(), psi_map::layout::data::G.layout());
-    let h = map.add_board("H".into(), psi_map::layout::data::H.layout());
+    let g = map.add_board("G".into(), lc.layout(&psi_map::layout::data::G));
+    let h = map.add_board("H".into(), lc.layout(&psi_map::layout::data::H));
     g.ocean().link(&h.ocean());
     g.land(LandNum(1)).unwrap().sink();
 
