@@ -116,6 +116,7 @@ impl BoardInner {
 }
 
 pub struct Board {
+    key: BoardKey,
     inner: RefCell<BoardInner>,
     layout: Rc<Layout>,
     map: Weak<Map>,
@@ -124,6 +125,7 @@ pub struct Board {
 impl Board {
     pub(crate) fn new(map: Weak<Map>, key: BoardKey, layout: Rc<Layout>) -> Rc<Self> {
         let rc = Rc::new(Self {
+            key: key.clone(),
             inner: RefCell::new(BoardInner {
                 lands: HashMap::new(),
                 neighbours: EnumMap::default(),
@@ -204,6 +206,16 @@ impl Board {
                 (land.key.0 == ocean_key && distance == Distance(1)).then_some(land)
             })
             .chain(Some(ocean))
+    }
+
+    pub fn cast_down(&self) {
+        for land in self.lands() {
+            land.cast_down();
+        }
+        if let Some(map) = self.map.upgrade() {
+            let removed = map.remove_board(&self.key);
+            debug_assert!(removed);
+        }
     }
 }
 

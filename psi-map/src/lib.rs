@@ -24,6 +24,10 @@ impl Map {
         board
     }
 
+    fn remove_board(&self, key: &BoardKey) -> bool {
+        self.0.borrow_mut().boards.remove(key).is_some()
+    }
+
     pub fn boards(&self) -> impl Iterator<Item = Rc<Board>> {
         self.0.borrow().boards.clone().into_values()
     }
