@@ -34,6 +34,10 @@ impl Map {
         self.0.borrow().boards.clone().into_values()
     }
 
+    pub fn board(&self, key: &BoardKey) -> Option<Rc<Board>> {
+        self.0.borrow().boards.get(key).cloned()
+    }
+
     pub fn land(&self, key: &LandKey) -> Option<Rc<Land>> {
         self.0
             .borrow()

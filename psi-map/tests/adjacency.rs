@@ -5,6 +5,9 @@ use psi_map::{
     layout::{Corner, Edge, LandNum},
 };
 
+#[path = "adjacency/p144/mod.rs"]
+mod p144;
+
 type CompareAdjaceciesLandKey<'a> = &'a str;
 type CompareAdjaceciesExpectedSingleLandLinks<'a> = (
     &'a [CompareAdjaceciesLandKey<'a>], // lands at distance 1, adjacent
