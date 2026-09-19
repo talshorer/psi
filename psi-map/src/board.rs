@@ -122,6 +122,16 @@ impl Land {
             }
         }
     }
+
+    fn coastal(&self) -> bool {
+        self.links.borrow().values().any(|link| {
+            link.distance == Distance(1)
+                && link
+                    .land
+                    .upgrade()
+                    .is_some_and(|land| matches!(land.terrain, Terrain::Ocean))
+        })
+    }
 }
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
@@ -254,14 +264,17 @@ impl Board {
     }
 
     fn coastals(&self) -> impl Iterator<Item = Rc<Land>> {
-        let ocean = self.land(LandNum(0)).expect("A board must have an ocean");
-        let ocean_key = ocean.key.0.clone();
-        ocean
-            .links_inner()
-            .filter_map(move |(land, distance)| {
-                (land.key.0 == ocean_key && distance == Distance(1)).then_some(land)
-            })
-            .chain(Some(ocean))
+        self.inner
+            .borrow()
+            .lands
+            .values()
+            .filter(|land| land.coastal())
+            .cloned()
+            .chain(Some(
+                self.land(LandNum(0)).expect("A board must have an ocean"),
+            ))
+            .collect::<Vec<_>>()
+            .into_iter()
     }
 
     pub fn cast_down(&self) {
