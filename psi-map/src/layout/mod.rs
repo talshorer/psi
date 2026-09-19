@@ -160,7 +160,7 @@ pub enum Edge {
 }
 
 #[derive(Enum, Clone, Copy)]
-pub(crate) enum Corner {
+pub enum Corner {
     Clock1,
     Clock5,
     Clock7,

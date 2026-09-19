@@ -232,8 +232,15 @@ impl Board {
         self.inner.borrow().land(num)
     }
 
-    fn corner(&self, corner: Corner) -> Option<Rc<Land>> {
+    fn corner_land(&self, corner: Corner) -> Option<Rc<Land>> {
         self.inner.borrow().land(self.layout.corner(corner))
+    }
+
+    pub fn corner(self: &Rc<Self>, corner: Corner) -> BoardCorner {
+        BoardCorner {
+            board: self.clone(),
+            corner,
+        }
     }
 
     fn neighbour(&self, edge: Edge) -> Option<BoardEdge> {
@@ -336,7 +343,7 @@ impl BoardEdge {
     }
 
     fn corner(&self, rotate: &Rotate) -> Option<Rc<Land>> {
-        self.board.corner(rotate.to_corner(self.edge))
+        self.board.corner_land(rotate.to_corner(self.edge))
     }
 }
 
@@ -401,6 +408,23 @@ impl BoardOcean {
         }
         self.link_one_way(other);
         other.link_one_way(self);
+    }
+}
+
+pub struct BoardCorner {
+    board: Rc<Board>,
+    corner: Corner,
+}
+
+impl BoardCorner {
+    fn land(&self) -> Option<Rc<Land>> {
+        self.board.corner_land(self.corner)
+    }
+
+    pub fn link(&self, other: &Self) {
+        if let Some((self_land, other_land)) = self.land().zip(other.land()) {
+            self_land.link(&other_land, Distance(1));
+        }
     }
 }
 

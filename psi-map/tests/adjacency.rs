@@ -2,7 +2,7 @@ use std::{collections::HashSet, error::Error};
 
 use psi_map::{
     LayoutCache, Map,
-    layout::{Edge, LandNum},
+    layout::{Corner, Edge, LandNum},
 };
 
 type CompareAdjaceciesLandKey<'a> = &'a str;
@@ -476,6 +476,39 @@ fn adjacencies_2p_archipelago_deeps() -> Result<(), Box<dyn Error>> {
             ("H6", (&["H1", "H2", "H5", "H7", "H8"], &[])),
             ("H7", (&["H8", "H4", "H5", "H6"], &[])),
             ("H8", (&["H1", "H6", "H7"], &[])),
+        ],
+    )
+}
+
+#[test]
+fn adjacencies_2p_corners() -> Result<(), Box<dyn Error>> {
+    let lc = LayoutCache::new();
+    let map = Map::new();
+    let g = map.add_board("G".into(), lc.layout(&psi_map::layout::data::G));
+    let h = map.add_board("H".into(), lc.layout(&psi_map::layout::data::H));
+    g.corner(Corner::Clock11).link(&h.corner(Corner::Clock5));
+
+    compare_adjacencies(
+        &map,
+        &[
+            ("G0", (&["G1", "G2", "G3"], &[])),
+            ("G1", (&["G2", "G6", "G0"], &[])),
+            ("G2", (&["G1", "G3", "G4", "G5", "G6", "G0"], &[])),
+            ("G3", (&["G2", "G4", "G0", "H8"], &[])),
+            ("G4", (&["G2", "G3", "G5", "G7"], &[])),
+            ("G5", (&["G2", "G4", "G6", "G7", "G8"], &[])),
+            ("G6", (&["G8", "G1", "G2", "G5"], &[])),
+            ("G7", (&["G8", "G4", "G5"], &[])),
+            ("G8", (&["G5", "G6", "G7"], &[])),
+            ("H0", (&["H1", "H2", "H3"], &[])),
+            ("H1", (&["H8", "H2", "H6", "H0"], &[])),
+            ("H2", (&["H1", "H3", "H5", "H6", "H0"], &[])),
+            ("H3", (&["H2", "H4", "H5", "H0"], &[])),
+            ("H4", (&["H3", "H5", "H7"], &[])),
+            ("H5", (&["H2", "H3", "H4", "H6", "H7"], &[])),
+            ("H6", (&["H1", "H2", "H5", "H7", "H8"], &[])),
+            ("H7", (&["H8", "H4", "H5", "H6"], &[])),
+            ("H8", (&["H1", "H6", "H7", "G3"], &[])),
         ],
     )
 }
