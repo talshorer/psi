@@ -113,14 +113,13 @@ impl Land {
             if distance == Distance(1)
                 && let Some(ocean) = ocean.as_ref()
             {
+                let newly_coastal = !land.coastal();
                 ocean.link(land, Distance(1));
+                if newly_coastal && let Some(other_board) = land.board.upgrade() {
+                    other_board.relink_archipelago();
+                }
             }
         });
-        if let Some(board) = board {
-            for linked_board in board.archipelago_links() {
-                board.ocean().link(&linked_board.ocean());
-            }
-        }
     }
 
     fn coastal(&self) -> bool {
@@ -289,6 +288,13 @@ impl Board {
 
     fn archipelago_links(&self) -> Vec<Rc<Board>> {
         self.inner.borrow().archipelago_links.iter().collect()
+    }
+
+    fn relink_archipelago(self: &Rc<Self>) {
+        let ocean = self.ocean();
+        for linked_board in self.archipelago_links() {
+            ocean.link(&linked_board.ocean());
+        }
     }
 }
 
