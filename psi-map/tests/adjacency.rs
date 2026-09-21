@@ -197,7 +197,7 @@ fn adjacencies_6p_star() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
-fn adjacencies_4p_archipelago() -> Result<(), Box<dyn Error>> {
+fn adjacencies_4p_archipelago_basic() -> Result<(), Box<dyn Error>> {
     // E-> <-H
     // F-> <-G
     let lc = LayoutCache::new();
@@ -512,6 +512,168 @@ fn adjacencies_2p_corners() -> Result<(), Box<dyn Error>> {
             ("H6", (&["H1", "H2", "H5", "H7", "H8"], &[])),
             ("H7", (&["H8", "H4", "H5", "H6"], &[])),
             ("H8", (&["H1", "H6", "H7", "G3"], &[])),
+        ],
+    )
+}
+
+#[test]
+fn adjacencies_3p_archipelago_relink_same_board() -> Result<(), Box<dyn Error>> {
+    let lc = LayoutCache::new();
+    let map = Map::new();
+    let a = map.add_board("A".into(), lc.layout(&psi_map::layout::data::A));
+    let c = map.add_board("C".into(), lc.layout(&psi_map::layout::data::C));
+    a.ocean().link(&c.ocean());
+    // Sinking A8 makes inner lands in A coastal. Which by the rules links them to C's coastals
+    // even though they don't touch the ocean.
+    a.land(LandNum(8)).unwrap().sink();
+
+    compare_adjacencies(
+        &map,
+        &[
+            (
+                "A0",
+                (
+                    &["A1", "A2", "A3", "A5", "A6", "A7"],
+                    &["C0", "C1", "C2", "C3"],
+                ),
+            ),
+            (
+                "A1",
+                (&["A2", "A4", "A5", "A6", "A0"], &["C0", "C1", "C2", "C3"]),
+            ),
+            ("A2", (&["A1", "A3", "A4", "A0"], &["C0", "C1", "C2", "C3"])),
+            ("A3", (&["A2", "A4", "A0"], &["C0", "C1", "C2", "C3"])),
+            ("A4", (&["A1", "A2", "A3", "A5"], &[])),
+            (
+                "A5",
+                (&["A1", "A4", "A6", "A7", "A0"], &["C0", "C1", "C2", "C3"]),
+            ),
+            ("A6", (&["A1", "A5", "A0"], &["C0", "C1", "C2", "C3"])),
+            ("A7", (&["A5", "A0"], &["C0", "C1", "C2", "C3"])),
+            (
+                "C0",
+                (
+                    &["C1", "C2", "C3"],
+                    &["A0", "A1", "A2", "A3", "A5", "A6", "A7"],
+                ),
+            ),
+            (
+                "C1",
+                (
+                    &["C2", "C5", "C6", "C0"],
+                    &["A0", "A1", "A2", "A3", "A5", "A6", "A7"],
+                ),
+            ),
+            (
+                "C2",
+                (
+                    &["C1", "C3", "C4", "C5", "C0"],
+                    &["A0", "A1", "A2", "A3", "A5", "A6", "A7"],
+                ),
+            ),
+            (
+                "C3",
+                (
+                    &["C2", "C4", "C0"],
+                    &["A0", "A1", "A2", "A3", "A5", "A6", "A7"],
+                ),
+            ),
+            ("C4", (&["C2", "C3", "C5", "C7"], &[])),
+            ("C5", (&["C1", "C2", "C4", "C6", "C7"], &[])),
+            ("C6", (&["C8", "C1", "C5", "C7"], &[])),
+            ("C7", (&["C8", "C4", "C5", "C6"], &[])),
+            ("C8", (&["C6", "C7"], &[])),
+        ],
+    )
+}
+
+#[test]
+fn adjacencies_3p_archipelago_relink_other_board() -> Result<(), Box<dyn Error>> {
+    let lc = LayoutCache::new();
+    let map = Map::new();
+    let a = map.add_board("A".into(), lc.layout(&psi_map::layout::data::A));
+    let b = map.add_board("B".into(), lc.layout(&psi_map::layout::data::B));
+    let c = map.add_board("C".into(), lc.layout(&psi_map::layout::data::C));
+    a.edge(Edge::Clock9).link(&b.edge(Edge::Clock3))?;
+    a.ocean().link(&c.ocean());
+    // Sinking B8 makes inner lands in A coastal. Which by the rules links them to C's coastals
+    // even though they don't touch the ocean.
+    b.land(LandNum(8)).unwrap().sink();
+
+    compare_adjacencies(
+        &map,
+        &[
+            ("A0", (&["A1", "A2", "A3"], &["C0", "C1", "C2", "C3"])),
+            (
+                "A1",
+                (&["A2", "A4", "A5", "A6", "A0"], &["C0", "C1", "C2", "C3"]),
+            ),
+            ("A2", (&["A1", "A3", "A4", "A0"], &["C0", "C1", "C2", "C3"])),
+            (
+                "A3",
+                (&["A2", "A4", "A0", "B6", "B1"], &["C0", "C1", "C2", "C3"]),
+            ),
+            (
+                "A4",
+                (
+                    &["A1", "A2", "A3", "A5", "B6", "B0"],
+                    &["C0", "C1", "C2", "C3"],
+                ),
+            ),
+            (
+                "A5",
+                (
+                    &["A1", "A4", "A6", "A7", "A8", "B0"],
+                    &["C0", "C1", "C2", "C3"],
+                ),
+            ),
+            ("A6", (&["A8", "A1", "A5"], &[])),
+            ("A7", (&["A8", "A5", "B0"], &["C0", "C1", "C2", "C3"])),
+            ("A8", (&["A5", "A6", "A7"], &[])),
+            (
+                "B0",
+                (&["B1", "B2", "B3", "B6", "B7", "A7", "A5", "A4"], &[]),
+            ),
+            ("B1", (&["B2", "B4", "B5", "B6", "B0", "A3"], &[])),
+            ("B2", (&["B1", "B3", "B4", "B0"], &[])),
+            ("B3", (&["B2", "B4", "B0"], &[])),
+            ("B4", (&["B1", "B2", "B3", "B5", "B7"], &[])),
+            ("B5", (&["B1", "B4", "B6", "B7"], &[])),
+            ("B6", (&["B1", "B5", "B7", "A4", "A3", "B0"], &[])),
+            ("B7", (&["B4", "B5", "B6", "B0"], &[])),
+            (
+                "C0",
+                (
+                    &["C1", "C2", "C3"],
+                    &["A0", "A1", "A2", "A3", "A7", "A5", "A4"],
+                ),
+            ),
+            (
+                "C1",
+                (
+                    &["C2", "C5", "C6", "C0"],
+                    &["A0", "A1", "A2", "A3", "A7", "A5", "A4"],
+                ),
+            ),
+            (
+                "C2",
+                (
+                    &["C1", "C3", "C4", "C5", "C0"],
+                    &["A0", "A1", "A2", "A3", "A7", "A5", "A4"],
+                ),
+            ),
+            (
+                "C3",
+                (
+                    &["C2", "C4", "C0"],
+                    &["A0", "A1", "A2", "A3", "A7", "A5", "A4"],
+                ),
+            ),
+            ("C4", (&["C2", "C3", "C5", "C7"], &[])),
+            ("C5", (&["C1", "C2", "C4", "C6", "C7"], &[])),
+            ("C6", (&["C8", "C1", "C5", "C7"], &[])),
+            ("C7", (&["C8", "C4", "C5", "C6"], &[])),
+            ("C8", (&["C6", "C7"], &[])),
         ],
     )
 }
