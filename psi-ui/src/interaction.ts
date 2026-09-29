@@ -78,3 +78,26 @@ function releaseBoard(event: PointerEvent): void {
 
 svg.addEventListener("pointerup", releaseBoard);
 svg.addEventListener("pointercancel", releaseBoard);
+
+svg.addEventListener(
+    "wheel",
+    (event) => {
+        const boardId = interactionState.heldBoard;
+
+        if (!boardId) {
+            return;
+        }
+
+        event.preventDefault();
+
+        const board = mapState.boards.find((board) => board.id === boardId);
+
+        if (!board) {
+            return;
+        }
+
+        board.rotation += event.deltaY > 0 ? 15 : -15;
+        updateBoard(board);
+    },
+    { passive: false },
+);
