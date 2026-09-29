@@ -41,3 +41,17 @@ header h1 {
     touch-action: none;
     user-select: none;
 }
+
+.board {
+    fill: url(#board-gradient);
+    stroke: #333;
+    stroke-width: 3;
+}
+
+.board-gradient-start {
+    stop-color: #a032dfad;
+}
+
+.board-gradient-end {
+    stop-color: #06c154;
+}

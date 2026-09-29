@@ -15,7 +15,15 @@
         </header>
 
         <div id="map-container">
-            <svg id="map"></svg>
+            <svg id="map">
+                <defs>
+                    <linearGradient id="board-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop class="board-gradient-start" offset="0%" />
+                        <stop class="board-gradient-end" offset="100%" />
+                    </linearGradient>
+                </defs>
+                <g id="boards" />
+            </svg>
         </div>
     </main>
 

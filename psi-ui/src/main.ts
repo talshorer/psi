@@ -1,5 +1,4 @@
-const svg = document.querySelector<SVGSVGElement>("#map");
+import { mapState } from "./state";
+import { renderBoards } from "./map";
 
-if (!svg) {
-    throw new Error("Could not find #map");
-}
+renderBoards(mapState.boards);
