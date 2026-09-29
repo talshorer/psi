@@ -1,6 +1,6 @@
 use std::{collections::HashSet, error::Error};
 
-use psi_map::{
+use psi_topology::{
     LayoutCache, Map,
     layout::{Corner, Edge, LandNum},
 };
@@ -53,9 +53,9 @@ fn compare_adjacencies(
 fn adjacencies_3p_standard() -> Result<(), Box<dyn Error>> {
     let lc = LayoutCache::new();
     let map = Map::new();
-    let a = map.add_board("A".into(), lc.layout(&psi_map::layout::data::A));
-    let b = map.add_board("B".into(), lc.layout(&psi_map::layout::data::B));
-    let c = map.add_board("C".into(), lc.layout(&psi_map::layout::data::C));
+    let a = map.add_board("A".into(), lc.layout(&psi_topology::layout::data::A));
+    let b = map.add_board("B".into(), lc.layout(&psi_topology::layout::data::B));
+    let c = map.add_board("C".into(), lc.layout(&psi_topology::layout::data::C));
     a.edge(Edge::Clock6).link(&b.edge(Edge::Clock9))?;
     b.edge(Edge::Clock6).link(&c.edge(Edge::Clock9))?;
     c.edge(Edge::Clock6).link(&a.edge(Edge::Clock9))?;
@@ -98,12 +98,12 @@ fn adjacencies_3p_standard() -> Result<(), Box<dyn Error>> {
 fn adjacencies_6p_star() -> Result<(), Box<dyn Error>> {
     let lc = LayoutCache::new();
     let map = Map::new();
-    let a = map.add_board("A".into(), lc.layout(&psi_map::layout::data::A));
-    let b = map.add_board("B".into(), lc.layout(&psi_map::layout::data::B));
-    let c = map.add_board("C".into(), lc.layout(&psi_map::layout::data::C));
-    let d = map.add_board("D".into(), lc.layout(&psi_map::layout::data::D));
-    let e = map.add_board("E".into(), lc.layout(&psi_map::layout::data::E));
-    let f = map.add_board("F".into(), lc.layout(&psi_map::layout::data::F));
+    let a = map.add_board("A".into(), lc.layout(&psi_topology::layout::data::A));
+    let b = map.add_board("B".into(), lc.layout(&psi_topology::layout::data::B));
+    let c = map.add_board("C".into(), lc.layout(&psi_topology::layout::data::C));
+    let d = map.add_board("D".into(), lc.layout(&psi_topology::layout::data::D));
+    let e = map.add_board("E".into(), lc.layout(&psi_topology::layout::data::E));
+    let f = map.add_board("F".into(), lc.layout(&psi_topology::layout::data::F));
     a.edge(Edge::Clock6).link(&b.edge(Edge::Clock3))?;
     b.edge(Edge::Clock6).link(&c.edge(Edge::Clock3))?;
     c.edge(Edge::Clock6).link(&d.edge(Edge::Clock3))?;
@@ -202,10 +202,10 @@ fn adjacencies_4p_archipelago_basic() -> Result<(), Box<dyn Error>> {
     // F-> <-G
     let lc = LayoutCache::new();
     let map = Map::new();
-    let e = map.add_board("E".into(), lc.layout(&psi_map::layout::data::E));
-    let f = map.add_board("F".into(), lc.layout(&psi_map::layout::data::F));
-    let g = map.add_board("G".into(), lc.layout(&psi_map::layout::data::G));
-    let h = map.add_board("H".into(), lc.layout(&psi_map::layout::data::H));
+    let e = map.add_board("E".into(), lc.layout(&psi_topology::layout::data::E));
+    let f = map.add_board("F".into(), lc.layout(&psi_topology::layout::data::F));
+    let g = map.add_board("G".into(), lc.layout(&psi_topology::layout::data::G));
+    let h = map.add_board("H".into(), lc.layout(&psi_topology::layout::data::H));
     e.edge(Edge::Clock3).link(&f.edge(Edge::Clock9))?;
     g.edge(Edge::Clock3).link(&h.edge(Edge::Clock9))?;
     e.ocean().link(&h.ocean());
@@ -285,8 +285,8 @@ fn adjacencies_4p_archipelago_basic() -> Result<(), Box<dyn Error>> {
 fn adjacencies_2p_standard_cast_down_land() -> Result<(), Box<dyn Error>> {
     let lc = LayoutCache::new();
     let map = Map::new();
-    let c = map.add_board("C".into(), lc.layout(&psi_map::layout::data::C));
-    let e = map.add_board("E".into(), lc.layout(&psi_map::layout::data::E));
+    let c = map.add_board("C".into(), lc.layout(&psi_topology::layout::data::C));
+    let e = map.add_board("E".into(), lc.layout(&psi_topology::layout::data::E));
     c.edge(Edge::Clock9).link(&e.edge(Edge::Clock9))?;
     c.land(LandNum(3)).unwrap().cast_down();
 
@@ -318,8 +318,8 @@ fn adjacencies_2p_standard_cast_down_land() -> Result<(), Box<dyn Error>> {
 fn adjacencies_2p_standard_cast_down_board() -> Result<(), Box<dyn Error>> {
     let lc = LayoutCache::new();
     let map = Map::new();
-    let c = map.add_board("C".into(), lc.layout(&psi_map::layout::data::C));
-    let e = map.add_board("E".into(), lc.layout(&psi_map::layout::data::E));
+    let c = map.add_board("C".into(), lc.layout(&psi_topology::layout::data::C));
+    let e = map.add_board("E".into(), lc.layout(&psi_topology::layout::data::E));
     c.edge(Edge::Clock9).link(&e.edge(Edge::Clock9))?;
 
     compare_adjacencies(
@@ -368,7 +368,7 @@ fn adjacencies_2p_standard_cast_down_board() -> Result<(), Box<dyn Error>> {
 fn adjacencies_1p_deeps_coastal() -> Result<(), Box<dyn Error>> {
     let lc = LayoutCache::new();
     let map = Map::new();
-    let g = map.add_board("G".into(), lc.layout(&psi_map::layout::data::G));
+    let g = map.add_board("G".into(), lc.layout(&psi_topology::layout::data::G));
     g.land(LandNum(1)).unwrap().sink();
 
     compare_adjacencies(
@@ -390,7 +390,7 @@ fn adjacencies_1p_deeps_coastal() -> Result<(), Box<dyn Error>> {
 fn adjacencies_1p_deeps_inland() -> Result<(), Box<dyn Error>> {
     let lc = LayoutCache::new();
     let map = Map::new();
-    let g = map.add_board("G".into(), lc.layout(&psi_map::layout::data::G));
+    let g = map.add_board("G".into(), lc.layout(&psi_topology::layout::data::G));
     g.land(LandNum(7)).unwrap().sink();
 
     compare_adjacencies(
@@ -412,8 +412,8 @@ fn adjacencies_1p_deeps_inland() -> Result<(), Box<dyn Error>> {
 fn adjacencies_2p_standard_deeps_join_oceans() -> Result<(), Box<dyn Error>> {
     let lc = LayoutCache::new();
     let map = Map::new();
-    let g = map.add_board("G".into(), lc.layout(&psi_map::layout::data::G));
-    let h = map.add_board("H".into(), lc.layout(&psi_map::layout::data::H));
+    let g = map.add_board("G".into(), lc.layout(&psi_topology::layout::data::G));
+    let h = map.add_board("H".into(), lc.layout(&psi_topology::layout::data::H));
     g.edge(Edge::Clock9).link(&h.edge(Edge::Clock9))?;
     g.land(LandNum(3)).unwrap().sink();
     h.land(LandNum(3)).unwrap().sink();
@@ -448,8 +448,8 @@ fn adjacencies_2p_standard_deeps_join_oceans() -> Result<(), Box<dyn Error>> {
 fn adjacencies_2p_archipelago_deeps() -> Result<(), Box<dyn Error>> {
     let lc = LayoutCache::new();
     let map = Map::new();
-    let g = map.add_board("G".into(), lc.layout(&psi_map::layout::data::G));
-    let h = map.add_board("H".into(), lc.layout(&psi_map::layout::data::H));
+    let g = map.add_board("G".into(), lc.layout(&psi_topology::layout::data::G));
+    let h = map.add_board("H".into(), lc.layout(&psi_topology::layout::data::H));
     g.ocean().link(&h.ocean());
     g.land(LandNum(1)).unwrap().sink();
 
@@ -487,8 +487,8 @@ fn adjacencies_2p_archipelago_deeps() -> Result<(), Box<dyn Error>> {
 fn adjacencies_2p_corners() -> Result<(), Box<dyn Error>> {
     let lc = LayoutCache::new();
     let map = Map::new();
-    let g = map.add_board("G".into(), lc.layout(&psi_map::layout::data::G));
-    let h = map.add_board("H".into(), lc.layout(&psi_map::layout::data::H));
+    let g = map.add_board("G".into(), lc.layout(&psi_topology::layout::data::G));
+    let h = map.add_board("H".into(), lc.layout(&psi_topology::layout::data::H));
     g.corner(Corner::Clock11).link(&h.corner(Corner::Clock5));
 
     compare_adjacencies(
@@ -520,8 +520,8 @@ fn adjacencies_2p_corners() -> Result<(), Box<dyn Error>> {
 fn adjacencies_3p_archipelago_relink_same_board() -> Result<(), Box<dyn Error>> {
     let lc = LayoutCache::new();
     let map = Map::new();
-    let a = map.add_board("A".into(), lc.layout(&psi_map::layout::data::A));
-    let c = map.add_board("C".into(), lc.layout(&psi_map::layout::data::C));
+    let a = map.add_board("A".into(), lc.layout(&psi_topology::layout::data::A));
+    let c = map.add_board("C".into(), lc.layout(&psi_topology::layout::data::C));
     a.ocean().link(&c.ocean());
     // Sinking A8 makes inner lands in A coastal. Which by the rules links them to C's coastals
     // even though they don't touch the ocean.
@@ -591,9 +591,9 @@ fn adjacencies_3p_archipelago_relink_same_board() -> Result<(), Box<dyn Error>> 
 fn adjacencies_3p_archipelago_relink_other_board() -> Result<(), Box<dyn Error>> {
     let lc = LayoutCache::new();
     let map = Map::new();
-    let a = map.add_board("A".into(), lc.layout(&psi_map::layout::data::A));
-    let b = map.add_board("B".into(), lc.layout(&psi_map::layout::data::B));
-    let c = map.add_board("C".into(), lc.layout(&psi_map::layout::data::C));
+    let a = map.add_board("A".into(), lc.layout(&psi_topology::layout::data::A));
+    let b = map.add_board("B".into(), lc.layout(&psi_topology::layout::data::B));
+    let c = map.add_board("C".into(), lc.layout(&psi_topology::layout::data::C));
     a.edge(Edge::Clock9).link(&b.edge(Edge::Clock3))?;
     a.ocean().link(&c.ocean());
     // Sinking B8 makes inner lands in A coastal. Which by the rules links them to C's coastals

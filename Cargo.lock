@@ -41,12 +41,12 @@ dependencies = [
 name = "psi"
 version = "0.1.0"
 dependencies = [
- "psi-map",
+ "psi-topology",
  "thiserror",
 ]
 
 [[package]]
-name = "psi-map"
+name = "psi-topology"
 version = "0.1.0"
 dependencies = [
  "either",

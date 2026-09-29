@@ -4,7 +4,7 @@ use std::{
     rc::Rc,
 };
 
-use psi_map::{
+use psi_topology::{
     LayoutCache, Map,
     board::{Board, BoardEdgeLinkError, BoardKey, Distance},
     layout::{Edge, ValidatedLayoutData},

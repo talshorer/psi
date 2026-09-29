@@ -1,6 +1,6 @@
 use std::error::Error;
 
-use psi_map::{
+use psi_topology::{
     LayoutCache, Map,
     board::{BoardEdge, BoardEdgeLinkError},
     layout::Edge::{self},
@@ -10,9 +10,9 @@ use psi_map::{
 fn edge_link_map_mismatch() -> Result<(), Box<dyn Error>> {
     let lc = LayoutCache::new();
     let map_a = Map::new();
-    let a = map_a.add_board("A".into(), lc.layout(&psi_map::layout::data::A));
+    let a = map_a.add_board("A".into(), lc.layout(&psi_topology::layout::data::A));
     let map_b = Map::new();
-    let b = map_b.add_board("B".into(), lc.layout(&psi_map::layout::data::B));
+    let b = map_b.add_board("B".into(), lc.layout(&psi_topology::layout::data::B));
     let result = a.edge(Edge::Clock3).link(&b.edge(Edge::Clock6));
     let Err(BoardEdgeLinkError::MapMismatch) = result else {
         return Err(format!("Expected Err(MapMismatch), got {result:?}").into());
@@ -27,13 +27,13 @@ fn edge_link_occupied(
     let lc = LayoutCache::new();
     let map = Map::new();
     let a = &map
-        .add_board("A".into(), lc.layout(&psi_map::layout::data::A))
+        .add_board("A".into(), lc.layout(&psi_topology::layout::data::A))
         .edge(Edge::Clock3);
     let b = &map
-        .add_board("B".into(), lc.layout(&psi_map::layout::data::B))
+        .add_board("B".into(), lc.layout(&psi_topology::layout::data::B))
         .edge(Edge::Clock6);
     let c = &map
-        .add_board("C".into(), lc.layout(&psi_map::layout::data::C))
+        .add_board("C".into(), lc.layout(&psi_topology::layout::data::C))
         .edge(Edge::Clock9);
     a.link(b)?;
     match f(a, c) {

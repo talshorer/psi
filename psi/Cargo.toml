@@ -12,4 +12,4 @@ readme.workspace = true
 [dependencies]
 thiserror.workspace = true
 
-psi-map = { path = "../psi-map" }
+psi-topology = { path = "../psi-topology" }

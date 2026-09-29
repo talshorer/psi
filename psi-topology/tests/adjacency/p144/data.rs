@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use psi_map::{
+use psi_topology::{
     LayoutCache, Map,
     board::{BoardKey, LandKey},
     layout::{Corner, Edge, LandNum},
@@ -12,142 +12,142 @@ pub(super) static BLUE: ContinentData<'static> = ContinentData {
     rim: [
         RegionData {
             key: "🧀",
-            p: &psi_map::layout::data::H,
-            q: &psi_map::layout::data::E,
-            r: &psi_map::layout::data::D,
-            s: &psi_map::layout::data::G,
-            t: &psi_map::layout::data::E,
-            u: &psi_map::layout::data::H,
+            p: &psi_topology::layout::data::H,
+            q: &psi_topology::layout::data::E,
+            r: &psi_topology::layout::data::D,
+            s: &psi_topology::layout::data::G,
+            t: &psi_topology::layout::data::E,
+            u: &psi_topology::layout::data::H,
         },
         RegionData {
             key: "🌙",
-            p: &psi_map::layout::data::C,
-            q: &psi_map::layout::data::A,
-            r: &psi_map::layout::data::C,
-            s: &psi_map::layout::data::H,
-            t: &psi_map::layout::data::A,
-            u: &psi_map::layout::data::H,
+            p: &psi_topology::layout::data::C,
+            q: &psi_topology::layout::data::A,
+            r: &psi_topology::layout::data::C,
+            s: &psi_topology::layout::data::H,
+            t: &psi_topology::layout::data::A,
+            u: &psi_topology::layout::data::H,
         },
         RegionData {
             key: "🦋",
-            p: &psi_map::layout::data::C,
-            q: &psi_map::layout::data::G,
-            r: &psi_map::layout::data::A,
-            s: &psi_map::layout::data::F,
-            t: &psi_map::layout::data::A,
-            u: &psi_map::layout::data::D,
+            p: &psi_topology::layout::data::C,
+            q: &psi_topology::layout::data::G,
+            r: &psi_topology::layout::data::A,
+            s: &psi_topology::layout::data::F,
+            t: &psi_topology::layout::data::A,
+            u: &psi_topology::layout::data::D,
         },
         RegionData {
             key: "👻",
-            p: &psi_map::layout::data::B,
-            q: &psi_map::layout::data::A,
-            r: &psi_map::layout::data::H,
-            s: &psi_map::layout::data::C,
-            t: &psi_map::layout::data::G,
-            u: &psi_map::layout::data::G,
+            p: &psi_topology::layout::data::B,
+            q: &psi_topology::layout::data::A,
+            r: &psi_topology::layout::data::H,
+            s: &psi_topology::layout::data::C,
+            t: &psi_topology::layout::data::G,
+            u: &psi_topology::layout::data::G,
         },
         RegionData {
             key: "🧩",
-            p: &psi_map::layout::data::B,
-            q: &psi_map::layout::data::H,
-            r: &psi_map::layout::data::H,
-            s: &psi_map::layout::data::A,
-            t: &psi_map::layout::data::E,
-            u: &psi_map::layout::data::D,
+            p: &psi_topology::layout::data::B,
+            q: &psi_topology::layout::data::H,
+            r: &psi_topology::layout::data::H,
+            s: &psi_topology::layout::data::A,
+            t: &psi_topology::layout::data::E,
+            u: &psi_topology::layout::data::D,
         },
         RegionData {
             key: "🌵",
-            p: &psi_map::layout::data::E,
-            q: &psi_map::layout::data::H,
-            r: &psi_map::layout::data::G,
-            s: &psi_map::layout::data::H,
-            t: &psi_map::layout::data::D,
-            u: &psi_map::layout::data::F,
+            p: &psi_topology::layout::data::E,
+            q: &psi_topology::layout::data::H,
+            r: &psi_topology::layout::data::G,
+            s: &psi_topology::layout::data::H,
+            t: &psi_topology::layout::data::D,
+            u: &psi_topology::layout::data::F,
         },
     ],
     spokes: [
         RegionData {
             key: "🐍",
-            p: &psi_map::layout::data::D,
-            q: &psi_map::layout::data::E,
-            r: &psi_map::layout::data::C,
-            s: &psi_map::layout::data::A,
-            t: &psi_map::layout::data::B,
-            u: &psi_map::layout::data::B,
+            p: &psi_topology::layout::data::D,
+            q: &psi_topology::layout::data::E,
+            r: &psi_topology::layout::data::C,
+            s: &psi_topology::layout::data::A,
+            t: &psi_topology::layout::data::B,
+            u: &psi_topology::layout::data::B,
         },
         RegionData {
             key: "♾️",
-            p: &psi_map::layout::data::H,
-            q: &psi_map::layout::data::H,
-            r: &psi_map::layout::data::B,
-            s: &psi_map::layout::data::G,
-            t: &psi_map::layout::data::F,
-            u: &psi_map::layout::data::E,
+            p: &psi_topology::layout::data::H,
+            q: &psi_topology::layout::data::H,
+            r: &psi_topology::layout::data::B,
+            s: &psi_topology::layout::data::G,
+            t: &psi_topology::layout::data::F,
+            u: &psi_topology::layout::data::E,
         },
         RegionData {
             key: "🇲🇺",
-            p: &psi_map::layout::data::A,
-            q: &psi_map::layout::data::C,
-            r: &psi_map::layout::data::A,
-            s: &psi_map::layout::data::C,
-            t: &psi_map::layout::data::C,
-            u: &psi_map::layout::data::A,
+            p: &psi_topology::layout::data::A,
+            q: &psi_topology::layout::data::C,
+            r: &psi_topology::layout::data::A,
+            s: &psi_topology::layout::data::C,
+            t: &psi_topology::layout::data::C,
+            u: &psi_topology::layout::data::A,
         },
         RegionData {
             key: "⚽",
-            p: &psi_map::layout::data::C,
-            q: &psi_map::layout::data::B,
-            r: &psi_map::layout::data::F,
-            s: &psi_map::layout::data::C,
-            t: &psi_map::layout::data::D,
-            u: &psi_map::layout::data::E,
+            p: &psi_topology::layout::data::C,
+            q: &psi_topology::layout::data::B,
+            r: &psi_topology::layout::data::F,
+            s: &psi_topology::layout::data::C,
+            t: &psi_topology::layout::data::D,
+            u: &psi_topology::layout::data::E,
         },
         RegionData {
             key: "🌱",
-            p: &psi_map::layout::data::B,
-            q: &psi_map::layout::data::E,
-            r: &psi_map::layout::data::G,
-            s: &psi_map::layout::data::G,
-            t: &psi_map::layout::data::H,
-            u: &psi_map::layout::data::G,
+            p: &psi_topology::layout::data::B,
+            q: &psi_topology::layout::data::E,
+            r: &psi_topology::layout::data::G,
+            s: &psi_topology::layout::data::G,
+            t: &psi_topology::layout::data::H,
+            u: &psi_topology::layout::data::G,
         },
         RegionData {
             key: "🐀",
-            p: &psi_map::layout::data::D,
-            q: &psi_map::layout::data::E,
-            r: &psi_map::layout::data::B,
-            s: &psi_map::layout::data::A,
-            t: &psi_map::layout::data::B,
-            u: &psi_map::layout::data::F,
+            p: &psi_topology::layout::data::D,
+            q: &psi_topology::layout::data::E,
+            r: &psi_topology::layout::data::B,
+            s: &psi_topology::layout::data::A,
+            t: &psi_topology::layout::data::B,
+            u: &psi_topology::layout::data::F,
         },
     ],
     hub: [
         RegionData {
             key: "🏝️",
-            p: &psi_map::layout::data::F,
-            q: &psi_map::layout::data::D,
-            r: &psi_map::layout::data::D,
-            s: &psi_map::layout::data::G,
-            t: &psi_map::layout::data::E,
-            u: &psi_map::layout::data::H,
+            p: &psi_topology::layout::data::F,
+            q: &psi_topology::layout::data::D,
+            r: &psi_topology::layout::data::D,
+            s: &psi_topology::layout::data::G,
+            t: &psi_topology::layout::data::E,
+            u: &psi_topology::layout::data::H,
         },
         RegionData {
             key: "💖",
-            p: &psi_map::layout::data::G,
-            q: &psi_map::layout::data::A,
-            r: &psi_map::layout::data::H,
-            s: &psi_map::layout::data::H,
-            t: &psi_map::layout::data::F,
-            u: &psi_map::layout::data::B,
+            p: &psi_topology::layout::data::G,
+            q: &psi_topology::layout::data::A,
+            r: &psi_topology::layout::data::H,
+            s: &psi_topology::layout::data::H,
+            t: &psi_topology::layout::data::F,
+            u: &psi_topology::layout::data::B,
         },
         RegionData {
             key: "😎",
-            p: &psi_map::layout::data::B,
-            q: &psi_map::layout::data::F,
-            r: &psi_map::layout::data::C,
-            s: &psi_map::layout::data::G,
-            t: &psi_map::layout::data::E,
-            u: &psi_map::layout::data::C,
+            p: &psi_topology::layout::data::B,
+            q: &psi_topology::layout::data::F,
+            r: &psi_topology::layout::data::C,
+            s: &psi_topology::layout::data::G,
+            t: &psi_topology::layout::data::E,
+            u: &psi_topology::layout::data::C,
         },
     ],
 };
@@ -156,142 +156,142 @@ pub(super) static ORANGE: ContinentData<'static> = ContinentData {
     rim: [
         RegionData {
             key: "🍌",
-            p: &psi_map::layout::data::C,
-            q: &psi_map::layout::data::B,
-            r: &psi_map::layout::data::H,
-            s: &psi_map::layout::data::B,
-            t: &psi_map::layout::data::F,
-            u: &psi_map::layout::data::D,
+            p: &psi_topology::layout::data::C,
+            q: &psi_topology::layout::data::B,
+            r: &psi_topology::layout::data::H,
+            s: &psi_topology::layout::data::B,
+            t: &psi_topology::layout::data::F,
+            u: &psi_topology::layout::data::D,
         },
         RegionData {
             key: "🐺",
-            p: &psi_map::layout::data::G,
-            q: &psi_map::layout::data::B,
-            r: &psi_map::layout::data::E,
-            s: &psi_map::layout::data::D,
-            t: &psi_map::layout::data::F,
-            u: &psi_map::layout::data::D,
+            p: &psi_topology::layout::data::G,
+            q: &psi_topology::layout::data::B,
+            r: &psi_topology::layout::data::E,
+            s: &psi_topology::layout::data::D,
+            t: &psi_topology::layout::data::F,
+            u: &psi_topology::layout::data::D,
         },
         RegionData {
             key: "🍕",
-            p: &psi_map::layout::data::F,
-            q: &psi_map::layout::data::G,
-            r: &psi_map::layout::data::E,
-            s: &psi_map::layout::data::F,
-            t: &psi_map::layout::data::D,
-            u: &psi_map::layout::data::G,
+            p: &psi_topology::layout::data::F,
+            q: &psi_topology::layout::data::G,
+            r: &psi_topology::layout::data::E,
+            s: &psi_topology::layout::data::F,
+            t: &psi_topology::layout::data::D,
+            u: &psi_topology::layout::data::G,
         },
         RegionData {
             key: "🍔",
-            p: &psi_map::layout::data::A,
-            q: &psi_map::layout::data::C,
-            r: &psi_map::layout::data::E,
-            s: &psi_map::layout::data::G,
-            t: &psi_map::layout::data::G,
-            u: &psi_map::layout::data::E,
+            p: &psi_topology::layout::data::A,
+            q: &psi_topology::layout::data::C,
+            r: &psi_topology::layout::data::E,
+            s: &psi_topology::layout::data::G,
+            t: &psi_topology::layout::data::G,
+            u: &psi_topology::layout::data::E,
         },
         RegionData {
             key: "🐦‍🔥",
-            p: &psi_map::layout::data::C,
-            q: &psi_map::layout::data::C,
-            r: &psi_map::layout::data::G,
-            s: &psi_map::layout::data::C,
-            t: &psi_map::layout::data::E,
-            u: &psi_map::layout::data::A,
+            p: &psi_topology::layout::data::C,
+            q: &psi_topology::layout::data::C,
+            r: &psi_topology::layout::data::G,
+            s: &psi_topology::layout::data::C,
+            t: &psi_topology::layout::data::E,
+            u: &psi_topology::layout::data::A,
         },
         RegionData {
             key: "📚",
-            p: &psi_map::layout::data::G,
-            q: &psi_map::layout::data::C,
-            r: &psi_map::layout::data::F,
-            s: &psi_map::layout::data::E,
-            t: &psi_map::layout::data::E,
-            u: &psi_map::layout::data::F,
+            p: &psi_topology::layout::data::G,
+            q: &psi_topology::layout::data::C,
+            r: &psi_topology::layout::data::F,
+            s: &psi_topology::layout::data::E,
+            t: &psi_topology::layout::data::E,
+            u: &psi_topology::layout::data::F,
         },
     ],
     spokes: [
         RegionData {
             key: "🥯",
-            p: &psi_map::layout::data::A,
-            q: &psi_map::layout::data::E,
-            r: &psi_map::layout::data::G,
-            s: &psi_map::layout::data::D,
-            t: &psi_map::layout::data::F,
-            u: &psi_map::layout::data::B,
+            p: &psi_topology::layout::data::A,
+            q: &psi_topology::layout::data::E,
+            r: &psi_topology::layout::data::G,
+            s: &psi_topology::layout::data::D,
+            t: &psi_topology::layout::data::F,
+            u: &psi_topology::layout::data::B,
         },
         RegionData {
             key: "🤠",
-            p: &psi_map::layout::data::H,
-            q: &psi_map::layout::data::A,
-            r: &psi_map::layout::data::F,
-            s: &psi_map::layout::data::B,
-            t: &psi_map::layout::data::F,
-            u: &psi_map::layout::data::F,
+            p: &psi_topology::layout::data::H,
+            q: &psi_topology::layout::data::A,
+            r: &psi_topology::layout::data::F,
+            s: &psi_topology::layout::data::B,
+            t: &psi_topology::layout::data::F,
+            u: &psi_topology::layout::data::F,
         },
         RegionData {
             key: "🍪",
-            p: &psi_map::layout::data::A,
-            q: &psi_map::layout::data::F,
-            r: &psi_map::layout::data::B,
-            s: &psi_map::layout::data::H,
-            t: &psi_map::layout::data::A,
-            u: &psi_map::layout::data::D,
+            p: &psi_topology::layout::data::A,
+            q: &psi_topology::layout::data::F,
+            r: &psi_topology::layout::data::B,
+            s: &psi_topology::layout::data::H,
+            t: &psi_topology::layout::data::A,
+            u: &psi_topology::layout::data::D,
         },
         RegionData {
             key: "🐉",
-            p: &psi_map::layout::data::H,
-            q: &psi_map::layout::data::D,
-            r: &psi_map::layout::data::C,
-            s: &psi_map::layout::data::H,
-            t: &psi_map::layout::data::G,
-            u: &psi_map::layout::data::B,
+            p: &psi_topology::layout::data::H,
+            q: &psi_topology::layout::data::D,
+            r: &psi_topology::layout::data::C,
+            s: &psi_topology::layout::data::H,
+            t: &psi_topology::layout::data::G,
+            u: &psi_topology::layout::data::B,
         },
         RegionData {
             key: "⛰️",
-            p: &psi_map::layout::data::C,
-            q: &psi_map::layout::data::G,
-            r: &psi_map::layout::data::C,
-            s: &psi_map::layout::data::H,
-            t: &psi_map::layout::data::A,
-            u: &psi_map::layout::data::D,
+            p: &psi_topology::layout::data::C,
+            q: &psi_topology::layout::data::G,
+            r: &psi_topology::layout::data::C,
+            s: &psi_topology::layout::data::H,
+            t: &psi_topology::layout::data::A,
+            u: &psi_topology::layout::data::D,
         },
         RegionData {
             key: "🎈",
-            p: &psi_map::layout::data::B,
-            q: &psi_map::layout::data::F,
-            r: &psi_map::layout::data::D,
-            s: &psi_map::layout::data::B,
-            t: &psi_map::layout::data::E,
-            u: &psi_map::layout::data::F,
+            p: &psi_topology::layout::data::B,
+            q: &psi_topology::layout::data::F,
+            r: &psi_topology::layout::data::D,
+            s: &psi_topology::layout::data::B,
+            t: &psi_topology::layout::data::E,
+            u: &psi_topology::layout::data::F,
         },
     ],
     hub: [
         RegionData {
             key: "⚡",
-            p: &psi_map::layout::data::B,
-            q: &psi_map::layout::data::A,
-            r: &psi_map::layout::data::A,
-            s: &psi_map::layout::data::F,
-            t: &psi_map::layout::data::H,
-            u: &psi_map::layout::data::C,
+            p: &psi_topology::layout::data::B,
+            q: &psi_topology::layout::data::A,
+            r: &psi_topology::layout::data::A,
+            s: &psi_topology::layout::data::F,
+            t: &psi_topology::layout::data::H,
+            u: &psi_topology::layout::data::C,
         },
         RegionData {
             key: "🤖",
-            p: &psi_map::layout::data::B,
-            q: &psi_map::layout::data::D,
-            r: &psi_map::layout::data::E,
-            s: &psi_map::layout::data::D,
-            t: &psi_map::layout::data::E,
-            u: &psi_map::layout::data::E,
+            p: &psi_topology::layout::data::B,
+            q: &psi_topology::layout::data::D,
+            r: &psi_topology::layout::data::E,
+            s: &psi_topology::layout::data::D,
+            t: &psi_topology::layout::data::E,
+            u: &psi_topology::layout::data::E,
         },
         RegionData {
             key: "🐑",
-            p: &psi_map::layout::data::H,
-            q: &psi_map::layout::data::A,
-            r: &psi_map::layout::data::D,
-            s: &psi_map::layout::data::B,
-            t: &psi_map::layout::data::D,
-            u: &psi_map::layout::data::A,
+            p: &psi_topology::layout::data::H,
+            q: &psi_topology::layout::data::A,
+            r: &psi_topology::layout::data::D,
+            s: &psi_topology::layout::data::B,
+            t: &psi_topology::layout::data::D,
+            u: &psi_topology::layout::data::A,
         },
     ],
 };
@@ -315,7 +315,10 @@ pub(super) fn modifications(map: &Rc<Map>, lc: &Rc<LayoutCache>) {
         .sink();
     map.board(&BoardKey::from("🇲🇺P")).unwrap().cast_down();
     {
-        let board = map.add_board(BoardKey::from("👻X"), lc.layout(&psi_map::layout::data::F));
+        let board = map.add_board(
+            BoardKey::from("👻X"),
+            lc.layout(&psi_topology::layout::data::F),
+        );
         board
             .edge(Edge::Clock3)
             .link(
@@ -345,7 +348,10 @@ pub(super) fn modifications(map: &Rc<Map>, lc: &Rc<LayoutCache>) {
         );
     }
     {
-        let board = map.add_board(BoardKey::from("👻Y"), lc.layout(&psi_map::layout::data::C));
+        let board = map.add_board(
+            BoardKey::from("👻Y"),
+            lc.layout(&psi_topology::layout::data::C),
+        );
         board
             .edge(Edge::Clock9)
             .link(
@@ -372,7 +378,10 @@ pub(super) fn modifications(map: &Rc<Map>, lc: &Rc<LayoutCache>) {
         .sink();
     map.board(&BoardKey::from("🤠U")).unwrap().cast_down();
     {
-        let board = map.add_board(BoardKey::from("👻Z"), lc.layout(&psi_map::layout::data::E));
+        let board = map.add_board(
+            BoardKey::from("👻Z"),
+            lc.layout(&psi_topology::layout::data::E),
+        );
         board
             .edge(Edge::Clock9)
             .link(
@@ -383,7 +392,10 @@ pub(super) fn modifications(map: &Rc<Map>, lc: &Rc<LayoutCache>) {
             .unwrap();
     }
     {
-        let board = map.add_board(BoardKey::from("👻V"), lc.layout(&psi_map::layout::data::D));
+        let board = map.add_board(
+            BoardKey::from("👻V"),
+            lc.layout(&psi_topology::layout::data::D),
+        );
         board
             .edge(Edge::Clock6)
             .link(
@@ -394,7 +406,10 @@ pub(super) fn modifications(map: &Rc<Map>, lc: &Rc<LayoutCache>) {
             .unwrap();
     }
     {
-        let board = map.add_board(BoardKey::from("👻W"), lc.layout(&psi_map::layout::data::G));
+        let board = map.add_board(
+            BoardKey::from("👻W"),
+            lc.layout(&psi_topology::layout::data::G),
+        );
         board
             .edge(Edge::Clock3)
             .link(
@@ -410,7 +425,10 @@ pub(super) fn modifications(map: &Rc<Map>, lc: &Rc<LayoutCache>) {
         ocean.link(&map.board(&BoardKey::from("🧩U")).unwrap().ocean());
     }
     {
-        let board = map.add_board(BoardKey::from("👻N"), lc.layout(&psi_map::layout::data::E));
+        let board = map.add_board(
+            BoardKey::from("👻N"),
+            lc.layout(&psi_topology::layout::data::E),
+        );
         board
             .edge(Edge::Clock6)
             .link(
@@ -421,7 +439,10 @@ pub(super) fn modifications(map: &Rc<Map>, lc: &Rc<LayoutCache>) {
             .unwrap();
     }
     {
-        let board = map.add_board(BoardKey::from("👻K"), lc.layout(&psi_map::layout::data::B));
+        let board = map.add_board(
+            BoardKey::from("👻K"),
+            lc.layout(&psi_topology::layout::data::B),
+        );
         board
             .edge(Edge::Clock6)
             .link(
