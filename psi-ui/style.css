@@ -42,10 +42,21 @@ header h1 {
     user-select: none;
 }
 
+#map.dragging,
+#map.dragging .board {
+    cursor: grabbing;
+}
+
 .board {
     fill: url(#board-gradient);
     stroke: #333;
     stroke-width: 3;
+    cursor: grab;
+}
+
+.board.held {
+    stroke: #e74c3c;
+    stroke-width: 6;
 }
 
 .board-gradient-start {

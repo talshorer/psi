@@ -54,3 +54,37 @@ export function renderBoards(boards: Board[]): void {
         svg.appendChild(createBoardElement(board));
     }
 }
+
+export function getMapElement(): SVGSVGElement {
+    const svg = document.querySelector<SVGSVGElement>("#map");
+
+    if (!svg) {
+        throw new Error("Could not find #map");
+    }
+
+    return svg;
+}
+
+export function updateBoard(board: Board): void {
+    const group = getMapElement().querySelector<SVGGElement>(
+        `[data-board-id="${board.id}"]`,
+    );
+
+    if (!group) {
+        throw new Error(`Could not find board ${board.id}`);
+    }
+
+    updateBoardElement(group, board);
+}
+
+export function setBoardHeld(boardId: string, held: boolean): void {
+    const group = getMapElement().querySelector<SVGGElement>(
+        `[data-board-id="${boardId}"]`,
+    );
+
+    if (!group) {
+        return;
+    }
+
+    group.classList.toggle("held", held);
+}

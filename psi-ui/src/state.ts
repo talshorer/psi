@@ -1,4 +1,4 @@
-import type { MapState } from "./types";
+import type { InteractionState, MapState } from "./types";
 
 export const mapState: MapState = {
     boards: [
@@ -15,4 +15,9 @@ export const mapState: MapState = {
             rotation: 0,
         },
     ],
+};
+
+export const interactionState: InteractionState = {
+    heldBoard: null,
+    dragOffset: null,
 };

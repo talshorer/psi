@@ -10,3 +10,8 @@ export interface Board {
 export interface MapState {
     boards: Board[];
 }
+
+export interface InteractionState {
+    heldBoard: BoardId | null;
+    dragOffset: { x: number; y: number } | null;
+}
