@@ -1,0 +1,18 @@
+[package]
+name = "psi-svg"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description.workspace = true
+readme.workspace = true
+
+[dependencies]
+boostvoronoi.workspace = true
+clap.workspace = true
+force_graph.workspace = true
+thiserror.workspace = true
+
+psi-topology = { path = "../psi-topology" }

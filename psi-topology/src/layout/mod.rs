@@ -113,12 +113,12 @@ impl<'a> ValidatedLayoutData<'a> {
         }
     }
 
-    pub(crate) fn layout(&self) -> Rc<Layout> {
+    pub fn layout(&self) -> Rc<Layout> {
         Rc::new(Layout::new(self))
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Terrain {
     Jungle,
     Mountain,
@@ -140,11 +140,11 @@ impl Terrain {
 }
 
 #[derive(Clone, Copy)]
-pub(crate) struct Boundary(usize);
+pub struct Boundary(pub usize);
 
 impl Boundary {
-    const MIN: usize = 1;
-    const MAX: usize = 6;
+    pub const MIN: usize = 1;
+    pub const MAX: usize = 6;
 
     pub(crate) fn add_would_overflow(&self, other: &Self) -> bool {
         self.0 + other.0 > Self::MAX + 1
@@ -167,26 +167,37 @@ pub enum Corner {
     Clock11,
 }
 
-pub(crate) struct Rotate<'a> {
+pub struct Rotate<'a> {
     edge_to_edge: EnumMap<Edge, Option<Edge>>,
     edge_to_corner: EnumMap<Edge, Corner>,
+    corner_to_edge: EnumMap<Corner, Option<Edge>>,
+    corner_to_corner: EnumMap<Corner, Corner>,
     reverse: &'a LazyLock<Self>,
 }
 
 impl<'a> Rotate<'a> {
-    pub(crate) fn edge_to_edge(&self, edge: Edge) -> Option<Edge> {
+    pub fn edge_to_edge(&self, edge: Edge) -> Option<Edge> {
         self.edge_to_edge[edge]
     }
 
-    pub(crate) fn edge_to_corner(&self, edge: Edge) -> Corner {
+    pub fn edge_to_corner(&self, edge: Edge) -> Corner {
         self.edge_to_corner[edge]
     }
-    pub(crate) fn reverse(&self) -> &Self {
+
+    pub fn corner_to_edge(&self, corner: Corner) -> Option<Edge> {
+        self.corner_to_edge[corner]
+    }
+
+    pub fn corner_to_corner(&self, corner: Corner) -> Corner {
+        self.corner_to_corner[corner]
+    }
+
+    pub fn reverse(&self) -> &Self {
         self.reverse
     }
 }
 
-pub(crate) static CLOCKWISE: LazyLock<Rotate> = LazyLock::new(|| Rotate {
+pub static CLOCKWISE: LazyLock<Rotate> = LazyLock::new(|| Rotate {
     edge_to_edge: enum_map! {
         Edge::Clock3 => Some(Edge::Clock6),
         Edge::Clock6 => Some(Edge::Clock9),
@@ -197,10 +208,22 @@ pub(crate) static CLOCKWISE: LazyLock<Rotate> = LazyLock::new(|| Rotate {
         Edge::Clock6 => Corner::Clock7,
         Edge::Clock9 => Corner::Clock11,
     },
+    corner_to_edge: enum_map! {
+        Corner::Clock1 => Some(Edge::Clock3),
+        Corner::Clock5 => Some(Edge::Clock6),
+        Corner::Clock7 => Some(Edge::Clock9),
+        Corner::Clock11 => None,
+    },
+    corner_to_corner: enum_map! {
+        Corner::Clock1 => Corner::Clock5,
+        Corner::Clock5 => Corner::Clock7,
+        Corner::Clock7 => Corner::Clock11,
+        Corner::Clock11 => Corner::Clock1,
+    },
     reverse: &COUNTER_CLOCKWISE,
 });
 
-pub(crate) static COUNTER_CLOCKWISE: LazyLock<Rotate> = LazyLock::new(|| Rotate {
+pub static COUNTER_CLOCKWISE: LazyLock<Rotate> = LazyLock::new(|| Rotate {
     edge_to_edge: enum_map! {
         Edge::Clock3 => None,
         Edge::Clock6 => Some(Edge::Clock3),
@@ -211,15 +234,27 @@ pub(crate) static COUNTER_CLOCKWISE: LazyLock<Rotate> = LazyLock::new(|| Rotate 
         Edge::Clock6 => Corner::Clock5,
         Edge::Clock9 => Corner::Clock7,
     },
+    corner_to_edge: enum_map! {
+        Corner::Clock1 => None,
+        Corner::Clock5 => Some(Edge::Clock3),
+        Corner::Clock7 => Some(Edge::Clock6),
+        Corner::Clock11 => Some(Edge::Clock9),
+    },
+    corner_to_corner: enum_map! {
+        Corner::Clock1 => Corner::Clock11,
+        Corner::Clock5 => Corner::Clock1,
+        Corner::Clock7 => Corner::Clock5,
+        Corner::Clock11 => Corner::Clock7,
+    },
     reverse: &CLOCKWISE,
 });
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 pub struct LandNum(pub usize);
 
-pub(crate) struct LayoutEdge {
-    pub(crate) lands: Vec<LandNum>,
-    pub(crate) boundaries: Vec<Boundary>,
+pub struct LayoutEdge {
+    pub lands: Vec<LandNum>,
+    pub boundaries: Vec<Boundary>,
 }
 
 impl LayoutEdge {
@@ -310,9 +345,9 @@ impl<I: Iterator<Item = LayoutEdgeIterItem>> Iterator for LayoutEdgeLinkIter<I> 
 }
 
 pub struct Layout {
-    pub(crate) edges: EnumMap<Edge, LayoutEdge>,
-    pub(crate) terrains: HashMap<LandNum, Terrain>,
-    pub(crate) internal_adjacencies: HashMap<LandNum, HashSet<LandNum>>,
+    pub edges: EnumMap<Edge, LayoutEdge>,
+    pub terrains: HashMap<LandNum, Terrain>,
+    pub internal_adjacencies: HashMap<LandNum, HashSet<LandNum>>,
 }
 
 impl Layout {
@@ -380,7 +415,7 @@ impl Layout {
         }
     }
 
-    pub(crate) fn corner(&self, corner: Corner) -> LandNum {
+    pub fn corner(&self, corner: Corner) -> LandNum {
         match corner {
             Corner::Clock1 => LandNum(1),
             Corner::Clock5 => *self.edges[Edge::Clock3]
