@@ -350,7 +350,7 @@ impl BoardEdge {
         let land = other.corner(rotate.reverse())?;
         let mut cur = self.clone();
         loop {
-            let rotated_edge = rotate.to_edge(cur.edge)?;
+            let rotated_edge = rotate.edge_to_edge(cur.edge)?;
             let other_edge = cur.board.neighbour(rotated_edge)?;
             let other_corner = other_edge.corner(rotate)?;
             if other_corner.key == land.key {
@@ -362,7 +362,7 @@ impl BoardEdge {
     }
 
     fn corner(&self, rotate: &Rotate) -> Option<Rc<Land>> {
-        self.board.corner_land(rotate.to_corner(self.edge))
+        self.board.corner_land(rotate.edge_to_corner(self.edge))
     }
 }
 

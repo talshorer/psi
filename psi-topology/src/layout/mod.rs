@@ -168,18 +168,18 @@ pub enum Corner {
 }
 
 pub(crate) struct Rotate<'a> {
-    to_edge: EnumMap<Edge, Option<Edge>>,
-    to_corner: EnumMap<Edge, Corner>,
+    edge_to_edge: EnumMap<Edge, Option<Edge>>,
+    edge_to_corner: EnumMap<Edge, Corner>,
     reverse: &'a LazyLock<Self>,
 }
 
 impl<'a> Rotate<'a> {
-    pub(crate) fn to_edge(&self, edge: Edge) -> Option<Edge> {
-        self.to_edge[edge]
+    pub(crate) fn edge_to_edge(&self, edge: Edge) -> Option<Edge> {
+        self.edge_to_edge[edge]
     }
 
-    pub(crate) fn to_corner(&self, edge: Edge) -> Corner {
-        self.to_corner[edge]
+    pub(crate) fn edge_to_corner(&self, edge: Edge) -> Corner {
+        self.edge_to_corner[edge]
     }
     pub(crate) fn reverse(&self) -> &Self {
         self.reverse
@@ -187,12 +187,12 @@ impl<'a> Rotate<'a> {
 }
 
 pub(crate) static CLOCKWISE: LazyLock<Rotate> = LazyLock::new(|| Rotate {
-    to_edge: enum_map! {
+    edge_to_edge: enum_map! {
         Edge::Clock3 => Some(Edge::Clock6),
         Edge::Clock6 => Some(Edge::Clock9),
         Edge::Clock9 => None,
     },
-    to_corner: enum_map! {
+    edge_to_corner: enum_map! {
         Edge::Clock3 => Corner::Clock5,
         Edge::Clock6 => Corner::Clock7,
         Edge::Clock9 => Corner::Clock11,
@@ -201,12 +201,12 @@ pub(crate) static CLOCKWISE: LazyLock<Rotate> = LazyLock::new(|| Rotate {
 });
 
 pub(crate) static COUNTER_CLOCKWISE: LazyLock<Rotate> = LazyLock::new(|| Rotate {
-    to_edge: enum_map! {
+    edge_to_edge: enum_map! {
         Edge::Clock3 => None,
         Edge::Clock6 => Some(Edge::Clock3),
         Edge::Clock9 => Some(Edge::Clock6),
     },
-    to_corner: enum_map! {
+    edge_to_corner: enum_map! {
         Edge::Clock3 => Corner::Clock1,
         Edge::Clock6 => Corner::Clock5,
         Edge::Clock9 => Corner::Clock7,
