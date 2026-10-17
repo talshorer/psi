@@ -151,7 +151,7 @@ impl Boundary {
     }
 }
 
-#[derive(Enum, Clone, Copy)]
+#[derive(Debug, Enum, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Edge {
     // We treat the ocean as being Clock12, and work from that
     Clock3,
@@ -159,7 +159,7 @@ pub enum Edge {
     Clock9,
 }
 
-#[derive(Enum, Clone, Copy)]
+#[derive(Enum, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Corner {
     Clock1,
     Clock5,

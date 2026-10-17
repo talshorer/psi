@@ -3,6 +3,7 @@ use std::{collections::BTreeMap, fmt::Write as _};
 use psi_topology::layout::{Boundary, LandNum, Layout, Terrain};
 
 mod for_seg_vor;
+mod force_only;
 mod poly;
 mod vec;
 
@@ -92,13 +93,25 @@ fn emit(lands: PolyLands, bb: &BoundingBox) -> Result<String, std::fmt::Error> {
 pub enum PsiSvgError {
     #[error("ForSegVor({0})")]
     ForSegVor(#[from] for_seg_vor::ForSegVorError),
+    #[error("ForceOnly({0})")]
+    ForceOnly(#[from] force_only::ForceOnlyError),
     #[error("Fmt({0})")]
     Fmt(#[from] std::fmt::Error),
 }
 
-pub fn from_layout(layout: &Layout, scale: f64) -> Result<String, PsiSvgError> {
+#[derive(Default, Clone, Copy)]
+pub enum PsiSvgAlgo {
+    ForSegVor,
+    #[default]
+    ForceOnly,
+}
+
+pub fn from_layout(layout: &Layout, scale: f64, algo: PsiSvgAlgo) -> Result<String, PsiSvgError> {
     let bb = BoundingBox::new(scale);
-    let poly_lands = for_seg_vor::for_seg_vor(layout, &bb)?;
+    let poly_lands = match algo {
+        PsiSvgAlgo::ForSegVor => for_seg_vor::for_seg_vor(layout, &bb)?,
+        PsiSvgAlgo::ForceOnly => force_only::force_only(layout, &bb)?,
+    };
     let svg = emit(poly_lands, &bb)?;
     Ok(svg)
 }
@@ -109,8 +122,8 @@ mod tests {
 
     use super::*;
 
-    #[test]
-    fn consistent_output() {
+    #[rstest::rstest]
+    fn consistent_output(#[values(PsiSvgAlgo::ForSegVor, PsiSvgAlgo::ForceOnly)] algo: PsiSvgAlgo) {
         const SCALE: f64 = 1000.0;
         let mut outputs = HashSet::new();
         for layout in [
@@ -123,7 +136,7 @@ mod tests {
             psi_topology::layout::data::G.layout(),
             psi_topology::layout::data::H.layout(),
         ] {
-            let factory = || from_layout(&layout, SCALE).unwrap();
+            let factory = || from_layout(&layout, SCALE, algo).unwrap();
             let svg = factory();
             assert!(outputs.insert(svg.clone()));
             for _ in 0..2 {

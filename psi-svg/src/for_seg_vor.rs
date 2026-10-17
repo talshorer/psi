@@ -291,7 +291,7 @@ impl<'a> GraphBuilder<'a> {
 
         for (land1, adj) in &self.layout.internal_adjacencies {
             for land2 in adj {
-                if land1.0 >= land2.0 {
+                if land1 >= land2 {
                     continue;
                 }
                 self.graph

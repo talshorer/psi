@@ -1,9 +1,14 @@
-use std::ops::{Add, Deref, Mul, Sub};
+use std::ops::{Add, AddAssign, Deref, Mul, Sub, SubAssign};
 
 #[derive(Debug, Clone, Copy, Default, PartialEq)]
 pub(crate) struct Vec2 {
     pub(crate) x: f64,
     pub(crate) y: f64,
+}
+impl Vec2 {
+    pub(crate) fn magnitude(&self) -> f64 {
+        f64::sqrt(self.x * self.x + self.y * self.y)
+    }
 }
 
 impl Add for Vec2 {
@@ -14,6 +19,12 @@ impl Add for Vec2 {
             x: self.x + rhs.x,
             y: self.y + rhs.y,
         }
+    }
+}
+
+impl AddAssign for Vec2 {
+    fn add_assign(&mut self, rhs: Self) {
+        *self = *self + rhs
     }
 }
 
@@ -28,6 +39,12 @@ impl Sub for Vec2 {
     }
 }
 
+impl SubAssign for Vec2 {
+    fn sub_assign(&mut self, rhs: Self) {
+        *self = *self - rhs
+    }
+}
+
 impl Mul<Vec2> for f64 {
     type Output = Vec2;
 
@@ -39,7 +56,7 @@ impl Mul<Vec2> for f64 {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 pub(crate) struct NormalizedVec2(Vec2);
 
 impl NormalizedVec2 {

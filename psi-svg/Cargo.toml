@@ -16,3 +16,6 @@ force_graph.workspace = true
 thiserror.workspace = true
 
 psi-topology = { path = "../psi-topology" }
+
+[dev-dependencies]
+rstest.workspace = true

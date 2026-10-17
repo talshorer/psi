@@ -1,4 +1,5 @@
 use clap::{Parser, ValueEnum};
+use psi_svg::PsiSvgAlgo;
 
 #[derive(Clone, ValueEnum)]
 #[value(rename_all = "UPPER")]
@@ -13,8 +14,36 @@ enum Layout {
     H,
 }
 
+#[derive(Clone, ValueEnum)]
+#[value(rename_all = "snake")]
+enum Algo {
+    ForSegVor,
+    ForceOnly,
+}
+
+impl Default for Algo {
+    fn default() -> Self {
+        match PsiSvgAlgo::default() {
+            PsiSvgAlgo::ForSegVor => Self::ForSegVor,
+            PsiSvgAlgo::ForceOnly => Self::ForceOnly,
+        }
+    }
+}
+
+impl From<Algo> for PsiSvgAlgo {
+    fn from(value: Algo) -> Self {
+        match value {
+            Algo::ForSegVor => Self::ForSegVor,
+            Algo::ForceOnly => Self::ForceOnly,
+        }
+    }
+}
+
 #[derive(Parser)]
 struct Args {
+    #[arg(long, short)]
+    /// Algorithm to use
+    algo: Option<Algo>,
     /// Board layout
     layout: Layout,
 }
@@ -32,7 +61,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Layout::H => &psi_topology::layout::data::H,
     }
     .layout();
-    let svg = psi_svg::from_layout(&layout, 700.0)?;
+    let svg = psi_svg::from_layout(&layout, 700.0, args.algo.unwrap_or_default().into())?;
     print!("{}", svg);
     Ok(())
 }
