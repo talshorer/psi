@@ -101,8 +101,8 @@ impl<'a> Graph<'a> {
             .with_segments({
                 let mut nodes = HashMap::new();
                 self.inner.visit_nodes(|node| {
-                    assert!(node.x().abs() <= self.bb.side);
-                    assert!(node.y().abs() <= self.bb.side);
+                    assert!(node.x().abs() as f64 <= self.bb.side);
+                    assert!(node.y().abs() as f64 <= self.bb.side);
                     if matches!(node.data.user_data.terrain, Terrain::Ocean) {
                         return;
                     }
@@ -111,8 +111,8 @@ impl<'a> Graph<'a> {
                         (
                             node.data.user_data,
                             Vec2 {
-                                x: node.x(),
-                                y: node.y(),
+                                x: node.x().into(),
+                                y: node.y().into(),
                             },
                         ),
                     );
@@ -222,8 +222,8 @@ impl<'a> GraphBuilder<'a> {
         self.indices.insert(
             land,
             self.graph.add_node(force_graph::NodeData {
-                x: point.map(|p| p.x).unwrap_or(0.0),
-                y: point.map(|p| p.y).unwrap_or(0.0),
+                x: point.map(|p| p.x as f32).unwrap_or(0.0),
+                y: point.map(|p| p.y as f32).unwrap_or(0.0),
                 mass: 0.0,
                 is_anchor: point.is_some(),
                 user_data: LandData {
@@ -251,13 +251,13 @@ impl<'a> GraphBuilder<'a> {
                 .zip(backwards)
                 .map_or_default(|(edge, advance)| {
                     (self.bb.side
-                        - self.layout.edges[edge].boundaries.last().unwrap().0 as f32
+                        - self.layout.edges[edge].boundaries.last().unwrap().0 as f64
                             * self.bb.per_boundary)
                         * *advance
                 })
                 + point,
             clockwise.zip(forwards).map_or_default(|(edge, advance)| {
-                self.layout.edges[edge].boundaries.first().unwrap().0 as f32
+                self.layout.edges[edge].boundaries.first().unwrap().0 as f64
                     * self.bb.per_boundary
                     * *advance
             }) + point,
@@ -273,8 +273,8 @@ impl<'a> GraphBuilder<'a> {
             .enumerate()
         {
             let anchor = Segment(
-                ledge.boundaries[idx].0 as f32 * self.bb.per_boundary * *advance + offset,
-                ledge.boundaries[idx + 1].0 as f32 * self.bb.per_boundary * *advance + offset,
+                ledge.boundaries[idx].0 as f64 * self.bb.per_boundary * *advance + offset,
+                ledge.boundaries[idx + 1].0 as f64 * self.bb.per_boundary * *advance + offset,
             );
             let point = 0.5 * (anchor.0 + anchor.1);
             self.land(land, Some((point, anchor)));
@@ -365,12 +365,12 @@ impl<'a> VoronoiPost<'a> {
             SegmentKey(v0.u32(), v1.u32()),
             Segment(
                 Vec2 {
-                    x: p0.x() as f32,
-                    y: p0.y() as f32,
+                    x: p0.x(),
+                    y: p0.y(),
                 },
                 Vec2 {
-                    x: p1.x() as f32,
-                    y: p1.y() as f32,
+                    x: p1.x(),
+                    y: p1.y(),
                 },
             ),
         ))

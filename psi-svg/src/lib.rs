@@ -10,17 +10,17 @@ use poly::Poly;
 use vec::Vec2;
 
 struct BoundingBox {
-    side: f32,
-    per_boundary: f32,
+    side: f64,
+    per_boundary: f64,
 }
 
 const _: () = const { assert!(Boundary::MIN == 1) };
 
 impl BoundingBox {
-    fn new(scale: f32) -> Self {
+    fn new(scale: f64) -> Self {
         Self {
             side: scale,
-            per_boundary: scale / (Boundary::MAX + 1) as f32,
+            per_boundary: scale / (Boundary::MAX + 1) as f64,
         }
     }
 }
@@ -96,7 +96,7 @@ pub enum PsiSvgError {
     Fmt(#[from] std::fmt::Error),
 }
 
-pub fn from_layout(layout: &Layout, scale: f32) -> Result<String, PsiSvgError> {
+pub fn from_layout(layout: &Layout, scale: f64) -> Result<String, PsiSvgError> {
     let bb = BoundingBox::new(scale);
     let poly_lands = for_seg_vor::for_seg_vor(layout, &bb)?;
     let svg = emit(poly_lands, &bb)?;

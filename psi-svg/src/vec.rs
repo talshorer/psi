@@ -2,8 +2,8 @@ use std::ops::{Add, Deref, Mul, Sub};
 
 #[derive(Debug, Clone, Copy, Default, PartialEq)]
 pub(crate) struct Vec2 {
-    pub(crate) x: f32,
-    pub(crate) y: f32,
+    pub(crate) x: f64,
+    pub(crate) y: f64,
 }
 
 impl Add for Vec2 {
@@ -28,7 +28,7 @@ impl Sub for Vec2 {
     }
 }
 
-impl Mul<Vec2> for f32 {
+impl Mul<Vec2> for f64 {
     type Output = Vec2;
 
     fn mul(self, rhs: Vec2) -> Self::Output {
