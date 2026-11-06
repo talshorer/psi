@@ -1,5 +1,5 @@
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{BTreeMap, BTreeSet, HashMap},
     iter::Peekable,
     rc::Rc,
     sync::LazyLock,
@@ -249,7 +249,7 @@ pub static COUNTER_CLOCKWISE: LazyLock<Rotate> = LazyLock::new(|| Rotate {
     reverse: &CLOCKWISE,
 });
 
-#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, PartialOrd, Ord)]
 pub struct LandNum(pub usize);
 
 pub struct LayoutEdge {
@@ -347,13 +347,13 @@ impl<I: Iterator<Item = LayoutEdgeIterItem>> Iterator for LayoutEdgeLinkIter<I> 
 pub struct Layout {
     pub edges: EnumMap<Edge, LayoutEdge>,
     pub terrains: HashMap<LandNum, Terrain>,
-    pub internal_adjacencies: HashMap<LandNum, HashSet<LandNum>>,
+    pub internal_adjacencies: BTreeMap<LandNum, BTreeSet<LandNum>>,
 }
 
 impl Layout {
     fn new(data: &ValidatedLayoutData) -> Self {
         fn link(
-            internal_adjacencies: &mut HashMap<LandNum, HashSet<LandNum>>,
+            internal_adjacencies: &mut BTreeMap<LandNum, BTreeSet<LandNum>>,
             i: LandNum,
             j: LandNum,
         ) {
@@ -382,7 +382,7 @@ impl Layout {
         );
 
         let mut internal_adjacencies =
-            HashMap::from_iter((0..=terrains.len()).map(|i| (LandNum(i), HashSet::default())));
+            BTreeMap::from_iter((0..=terrains.len()).map(|i| (LandNum(i), BTreeSet::default())));
         for (i, j) in internal_adjacencies_data
             .iter()
             .copied()

@@ -10,7 +10,7 @@
 //! land. Those are deduplicated by eliminating duplicate edges, and stitching together all the
 //! surviving edges of each land into a polygon.
 
-use std::collections::{HashMap, HashSet, hash_map::Entry};
+use std::collections::{BTreeMap, BTreeSet, HashMap, hash_map::Entry};
 
 use psi_topology::layout::{Corner, Edge, LandNum, Layout, LayoutEdge, Terrain};
 
@@ -99,7 +99,7 @@ impl<'a> Graph<'a> {
         let mut lands = VoronoiLands::default();
         let diagram = boostvoronoi::builder::Builder::default()
             .with_segments({
-                let mut nodes = HashMap::new();
+                let mut nodes = BTreeMap::new();
                 self.inner.visit_nodes(|node| {
                     assert!(node.x().abs() as f64 <= self.bb.side);
                     assert!(node.y().abs() as f64 <= self.bb.side);
@@ -199,7 +199,7 @@ impl<'a> Graph<'a> {
 struct GraphBuilder<'a> {
     layout: &'a Layout,
     bb: &'a BoundingBox,
-    open: HashSet<LandNum>,
+    open: BTreeSet<LandNum>,
     graph: force_graph::ForceGraph<LandData, ()>,
     indices: HashMap<LandNum, force_graph::DefaultNodeIdx>,
 }
@@ -328,7 +328,7 @@ impl VoronoiLands {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 struct SegmentKey(u32, u32);
 
 impl SegmentKey {
@@ -340,7 +340,7 @@ impl SegmentKey {
 struct VoronoiPost<'a> {
     diagram: &'a boostvoronoi::diagram::Diagram,
     lands: &'a VoronoiLands,
-    cells: HashMap<LandNum, HashMap<SegmentKey, Segment>>,
+    cells: BTreeMap<LandNum, BTreeMap<SegmentKey, Segment>>,
 }
 
 impl<'a> VoronoiPost<'a> {
@@ -397,7 +397,7 @@ impl<'a> VoronoiPost<'a> {
         }
     }
 
-    fn polys(mut self) -> HashMap<LandNum, (Terrain, Poly)> {
+    fn polys(mut self) -> BTreeMap<LandNum, (Terrain, Poly)> {
         for cell in self.diagram.cells().iter() {
             self.cell(cell)
         }
@@ -409,7 +409,7 @@ impl<'a> VoronoiPost<'a> {
                 let mut edge_by_vidx = edges
                     .iter()
                     .map(|(k, v)| (k.0, (k.1, *v)))
-                    .collect::<HashMap<_, _>>();
+                    .collect::<BTreeMap<_, _>>();
                 assert_eq!(edge_by_vidx.len(), edges.len());
                 edge_by_vidx.remove(&first_key.0);
 

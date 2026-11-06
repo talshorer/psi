@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fmt::Write as _};
+use std::{collections::BTreeMap, fmt::Write as _};
 
 use psi_topology::layout::{Boundary, LandNum, Layout, Terrain};
 
@@ -41,7 +41,7 @@ fn poly_path(poly: &Poly, bb: &BoundingBox) -> Result<String, std::fmt::Error> {
     Ok(path)
 }
 
-struct PolyLands(HashMap<LandNum, (Terrain, Poly)>);
+struct PolyLands(BTreeMap<LandNum, (Terrain, Poly)>);
 
 fn emit(lands: PolyLands, bb: &BoundingBox) -> Result<String, std::fmt::Error> {
     let mut out = String::new();
@@ -101,4 +101,35 @@ pub fn from_layout(layout: &Layout, scale: f64) -> Result<String, PsiSvgError> {
     let poly_lands = for_seg_vor::for_seg_vor(layout, &bb)?;
     let svg = emit(poly_lands, &bb)?;
     Ok(svg)
+}
+
+#[cfg(test)]
+mod tests {
+    use std::collections::HashSet;
+
+    use super::*;
+
+    #[test]
+    fn consistent_output() {
+        const SCALE: f64 = 1000.0;
+        let mut outputs = HashSet::new();
+        for layout in [
+            psi_topology::layout::data::A.layout(),
+            psi_topology::layout::data::B.layout(),
+            psi_topology::layout::data::C.layout(),
+            psi_topology::layout::data::D.layout(),
+            psi_topology::layout::data::E.layout(),
+            psi_topology::layout::data::F.layout(),
+            psi_topology::layout::data::G.layout(),
+            psi_topology::layout::data::H.layout(),
+        ] {
+            let factory = || from_layout(&layout, SCALE).unwrap();
+            let svg = factory();
+            assert!(outputs.insert(svg.clone()));
+            for _ in 0..2 {
+                let svg2 = factory();
+                assert_eq!(svg, svg2);
+            }
+        }
+    }
 }
