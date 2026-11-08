@@ -3,6 +3,7 @@ resolver = "3"
 members = [
     "psi-svg",
     "psi-topology",
+    "psi-vec",
     "psi",
 ]
 

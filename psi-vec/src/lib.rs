@@ -1,12 +1,12 @@
 use std::ops::{Add, AddAssign, Deref, Mul, Sub, SubAssign};
 
 #[derive(Debug, Clone, Copy, Default, PartialEq)]
-pub(crate) struct Vec2 {
-    pub(crate) x: f64,
-    pub(crate) y: f64,
+pub struct Vec2 {
+    pub x: f64,
+    pub y: f64,
 }
 impl Vec2 {
-    pub(crate) fn magnitude(&self) -> f64 {
+    pub fn magnitude(&self) -> f64 {
         f64::sqrt(self.x * self.x + self.y * self.y)
     }
 }
@@ -57,10 +57,10 @@ impl Mul<Vec2> for f64 {
 }
 
 #[derive(Debug, Clone, Copy)]
-pub(crate) struct NormalizedVec2(Vec2);
+pub struct NormalizedVec2(Vec2);
 
 impl NormalizedVec2 {
-    pub(crate) const fn const_new(v: Vec2) -> Option<Self> {
+    pub const fn const_new(v: Vec2) -> Option<Self> {
         if (v.x * v.x + v.y * v.y) == 1.0 {
             Some(Self(v))
         } else {

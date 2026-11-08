@@ -1,14 +1,13 @@
 use std::{collections::BTreeMap, fmt::Write as _};
 
 use psi_topology::layout::{Boundary, LandNum, Layout, Terrain};
+use psi_vec::Vec2;
 
 mod for_seg_vor;
 mod force_only;
 mod poly;
-mod vec;
 
 use poly::Poly;
-use vec::Vec2;
 
 struct BoundingBox {
     side: f64,

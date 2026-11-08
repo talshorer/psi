@@ -396,6 +396,7 @@ dependencies = [
  "clap",
  "force_graph",
  "psi-topology",
+ "psi-vec",
  "rstest",
  "thiserror",
 ]
@@ -408,6 +409,10 @@ dependencies = [
  "enum-map",
  "thiserror",
 ]
+
+[[package]]
+name = "psi-vec"
+version = "0.1.0"
 
 [[package]]
 name = "quote"
