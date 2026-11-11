@@ -415,7 +415,7 @@ impl<'a> Graph<'a> {
         }
     }
 
-    fn polys(&self) -> BTreeMap<LandNum, (Terrain, Poly)> {
+    fn polys(&self) -> Result<BTreeMap<LandNum, (Terrain, Poly)>, PhysicsSimulationBreakage> {
         let mut polys = BTreeMap::new();
         for (v, p) in &self.position {
             assert!(
@@ -434,9 +434,12 @@ impl<'a> Graph<'a> {
                 prev = next;
             }
             poly.push(Segment(prev, first));
+            if poly.has_crosses() {
+                return Err(PhysicsSimulationBreakage);
+            }
             polys.insert(*land, (terrain, poly.poly()));
         }
-        polys
+        Ok(polys)
     }
 }
 
@@ -452,6 +455,10 @@ struct GraphBuilder<'a> {
 #[derive(Debug, thiserror::Error)]
 #[error("EnclaveUnsupported")]
 pub struct EnclaveUnsupported;
+
+#[derive(Debug, thiserror::Error)]
+#[error("PhysicsSimulationBreakage")]
+pub struct PhysicsSimulationBreakage;
 
 #[derive(Debug, Clone, Copy)]
 enum VertexAnchor {
@@ -654,9 +661,6 @@ impl<'a> GraphBuilder<'a> {
                 }
                 assert!(vertices.len() % 2 == 0);
                 let Some([v1, v2]) = vertices.as_array() else {
-                    eprintln!(
-                        "DEBUG-tals land1: {land1:?}, land2: {land2:?}, vertices: {vertices:?}"
-                    );
                     // Consider a layout like
                     // ┏━━━┳━━━┓
                     // ┃ ┏━┻━┓ ┃
@@ -719,8 +723,10 @@ impl<'a> GraphBuilder<'a> {
 
 #[derive(Debug, thiserror::Error)]
 pub enum ForceOnlyError {
-    #[error("EnclaveUnsupported")]
+    #[error(transparent)]
     EnclaveUnsupported(#[from] EnclaveUnsupported),
+    #[error(transparent)]
+    PhysicsSimulationBreakage(#[from] PhysicsSimulationBreakage),
 }
 
 pub(crate) fn force_only(
@@ -730,5 +736,5 @@ pub(crate) fn force_only(
 ) -> Result<PolyLands, ForceOnlyError> {
     let mut graph = Graph::build(layout, bb, config)?;
     graph.evolve();
-    Ok(PolyLands(graph.polys()))
+    Ok(PolyLands(graph.polys()?))
 }

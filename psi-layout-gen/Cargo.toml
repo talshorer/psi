@@ -1,0 +1,20 @@
+[package]
+name = "psi-layout-gen"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description.workspace = true
+readme.workspace = true
+
+[dependencies]
+clap.workspace = true
+json5.workspace = true
+rand_chacha.workspace = true
+rand.workspace = true
+
+psi-svg = { path = "../psi-svg" }
+psi-topology = { path = "../psi-topology" }
+psi-vec = { path = "../psi-vec" }

@@ -1,4 +1,4 @@
-use std::ops::{Add, AddAssign, Deref, Mul, Sub, SubAssign};
+use std::ops::{Add, AddAssign, Deref, Mul, Neg, Sub, SubAssign};
 
 #[derive(Debug, Clone, Copy, Default, PartialEq)]
 pub struct Vec2 {
@@ -12,6 +12,10 @@ impl Vec2 {
 
     pub const fn dot(&self, rhs: Self) -> f64 {
         self.x * rhs.x + self.y * rhs.y
+    }
+
+    pub const fn cross(&self, rhs: Self) -> f64 {
+        self.x * rhs.y - self.y * rhs.x
     }
 
     pub const fn quarter_counterclockwise(&self) -> Self {
@@ -70,6 +74,17 @@ impl Mul<Vec2> for f64 {
         Vec2 {
             x: self * rhs.x,
             y: self * rhs.y,
+        }
+    }
+}
+
+impl Neg for Vec2 {
+    type Output = Self;
+
+    fn neg(self) -> Self::Output {
+        Self {
+            x: -self.x,
+            y: -self.y,
         }
     }
 }

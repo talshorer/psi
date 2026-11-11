@@ -11,19 +11,19 @@ use enum_map::{Enum, EnumMap, enum_map};
 pub mod data;
 
 #[derive(Hash, PartialEq, Eq)]
-struct LayoutData<'a> {
-    envelope: &'a [usize],
-    boundaries: (&'a [usize], &'a [usize], &'a [usize]),
-    internal_adjacencies: &'a [(usize, usize)],
-    terrains: &'a [char],
-    coastals: &'a [usize],
+pub struct LayoutData<'a> {
+    pub envelope: &'a [usize],
+    pub boundaries: (&'a [usize], &'a [usize], &'a [usize]),
+    pub internal_adjacencies: &'a [(usize, usize)],
+    pub terrains: &'a [char],
+    pub coastals: &'a [usize],
 }
 
 #[derive(Hash, PartialEq, Eq)]
 pub struct ValidatedLayoutData<'a>(&'a LayoutData<'a>);
 
 impl<'a> ValidatedLayoutData<'a> {
-    const fn validate(data: &'a LayoutData) -> Option<Self> {
+    pub const fn validate(data: &'a LayoutData) -> Option<Self> {
         const fn validate_terrains(terrains: &[char]) -> bool {
             let len = terrains.len();
             let mut i = 0;
@@ -416,17 +416,12 @@ impl Layout {
     }
 
     pub fn corner(&self, corner: Corner) -> LandNum {
-        match corner {
-            Corner::Clock1 => LandNum(1),
-            Corner::Clock5 => *self.edges[Edge::Clock3]
-                .lands
-                .last()
-                .expect("Invalid layout"),
-            Corner::Clock7 => *self.edges[Edge::Clock6]
-                .lands
-                .last()
-                .expect("Invalid layout"),
-            Corner::Clock11 => LandNum(3),
+        *match corner {
+            Corner::Clock1 => self.edges[Edge::Clock3].lands.first(),
+            Corner::Clock5 => self.edges[Edge::Clock3].lands.last(),
+            Corner::Clock7 => self.edges[Edge::Clock6].lands.last(),
+            Corner::Clock11 => self.edges[Edge::Clock9].lands.last(),
         }
+        .expect("Invalid layout")
     }
 }

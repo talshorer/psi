@@ -1,6 +1,7 @@
 [workspace]
 resolver = "3"
 members = [
+    "psi-layout-gen",
     "psi-svg",
     "psi-topology",
     "psi-vec",
@@ -24,6 +25,8 @@ either = "1.18.0"
 enum-map = "3.1.0"
 force_graph = "0.4.0"
 json5 = "1.3.7"
+rand = "0.10.3"
+rand_chacha = "0.10.0"
 rstest = "0.28.0"
 serde = { version = "1.0.229", features = ["derive"] }
 thiserror = "2.0.20"
