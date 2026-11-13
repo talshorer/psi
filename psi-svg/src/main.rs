@@ -44,6 +44,8 @@ struct Args {
     #[arg(long, short)]
     /// Algorithm to use
     algo: Option<Algo>,
+    #[arg(long, short)]
+    theta: Option<u32>,
     /// Board layout
     layout: Layout,
 }
@@ -61,7 +63,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Layout::H => &psi_topology::layout::data::H,
     }
     .layout();
-    let svg = psi_svg::from_layout(&layout, 700.0, args.algo.unwrap_or_default().into())?;
+    let svg = psi_svg::from_layout(
+        &layout,
+        700.0,
+        args.theta.unwrap_or(60) as f64 * std::f64::consts::PI / 180.0,
+        args.algo.unwrap_or_default().into(),
+    )?;
     print!("{}", svg);
     Ok(())
 }
