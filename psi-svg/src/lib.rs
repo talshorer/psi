@@ -179,11 +179,20 @@ mod tests {
 
     use super::*;
 
+    fn force_only() -> PsiSvgAlgo {
+        let default = force_only::ForceOnlyConfig::default();
+        PsiSvgAlgo::ForceOnly(force_only::ForceOnlyConfig {
+            spring_force: default.spring_force * 10.0,
+            pressure: default.pressure * 10.0,
+            spring_force2: default.spring_force2 * 10.0,
+            edge_push_force: default.edge_push_force * 10.0,
+            spring_iters: default.spring_iters / 10,
+            deflate_iters: default.deflate_iters / 10,
+        })
+    }
+
     #[rstest::rstest]
-    fn consistent_output(
-        #[values(PsiSvgAlgo::ForSegVor, PsiSvgAlgo::ForceOnly(Default::default()))]
-        algo: PsiSvgAlgo,
-    ) {
+    fn consistent_output(#[values(PsiSvgAlgo::ForSegVor, force_only())] algo: PsiSvgAlgo) {
         const SCALE: f64 = 1000.0;
         const THETA: f64 = std::f64::consts::FRAC_PI_2;
         let mut outputs = HashSet::new();

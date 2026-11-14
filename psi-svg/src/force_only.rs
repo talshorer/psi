@@ -180,42 +180,42 @@ impl CellDataBuilder {
 #[derive(serde::Deserialize)]
 pub struct ForceOnlyConfig {
     #[serde(default = "ForceOnlyConfig::default_spring_force")]
-    spring_force: f64,
+    pub(crate) spring_force: f64,
     #[serde(default = "ForceOnlyConfig::default_pressure")]
-    pressure: f64,
+    pub(crate) pressure: f64,
     #[serde(default = "ForceOnlyConfig::default_spring_force2")]
-    spring_force2: f64,
+    pub(crate) spring_force2: f64,
     #[serde(default = "ForceOnlyConfig::default_edge_push_force")]
-    edge_push_force: f64,
+    pub(crate) edge_push_force: f64,
     #[serde(default = "ForceOnlyConfig::default_spring_iters")]
-    spring_iters: usize,
+    pub(crate) spring_iters: usize,
     #[serde(default = "ForceOnlyConfig::default_deflate_iters")]
-    deflate_iters: usize,
+    pub(crate) deflate_iters: usize,
 }
 
 impl ForceOnlyConfig {
     const fn default_spring_force() -> f64 {
-        0.1
-    }
-
-    const fn default_pressure() -> f64 {
-        3000.0
-    }
-
-    const fn default_spring_force2() -> f64 {
         0.01
     }
 
+    const fn default_pressure() -> f64 {
+        300.0
+    }
+
+    const fn default_spring_force2() -> f64 {
+        0.001
+    }
+
     const fn default_edge_push_force() -> f64 {
-        0.5
+        0.05
     }
 
     const fn default_spring_iters() -> usize {
-        100
+        1000
     }
 
     const fn default_deflate_iters() -> usize {
-        100
+        1000
     }
 }
 
