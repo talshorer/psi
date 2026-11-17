@@ -181,6 +181,7 @@ pub(crate) struct ForceOnlyConfig {
     spring_force: f64,
     pressure: f64,
     spring_force2: f64,
+    edge_push_force: f64,
     spring_iters: usize,
     deflate_iters: usize,
 }
@@ -201,6 +202,7 @@ impl Default for ForceOnlyConfig {
             spring_force: from_env("FO_SPRING_FORCE", 0.1),
             pressure: from_env("FO_PRESSURE", 3000.0),
             spring_force2: from_env("FO_SPRING_FORCE2", 0.01),
+            edge_push_force: from_env("FO_EDGE_PUSH_FORCE", 0.5),
             spring_iters: from_env("FO_SPRING_ITERS", 100),
             deflate_iters: from_env("FO_DEFLATE_ITERS", 100),
         }
@@ -312,6 +314,33 @@ impl<'a> Graph<'a> {
                 *self.force.get_mut(v1).unwrap() += force;
                 *self.force.get_mut(v2).unwrap() -= force;
             }
+        }
+        for v in self.vertices.keys() {
+            let pos = self.position[v];
+            let mut force = Vec2::default();
+            if pos.x < self.bb.side * 0.1 {
+                force += Vec2 {
+                    x: (self.bb.side * 0.1 - pos.x) * self.config.edge_push_force,
+                    y: 0.0,
+                }
+            } else if pos.x > self.bb.side * 0.9 {
+                force += Vec2 {
+                    x: (self.bb.side * 0.9 - pos.x) * self.config.edge_push_force,
+                    y: 0.0,
+                }
+            }
+            if pos.y < self.bb.side * 0.1 {
+                force += Vec2 {
+                    x: 0.0,
+                    y: (self.bb.side * 0.1 - pos.y) * self.config.edge_push_force,
+                }
+            } else if pos.y > self.bb.side * 0.9 {
+                force += Vec2 {
+                    x: 0.0,
+                    y: (self.bb.side * 0.9 - pos.y) * self.config.edge_push_force,
+                }
+            }
+            *self.force.get_mut(v).unwrap() += force;
         }
     }
 
