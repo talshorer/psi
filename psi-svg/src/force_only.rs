@@ -296,10 +296,7 @@ impl<'a> Graph<'a> {
                 let diff = self.position[v2] - self.position[v1];
                 // clock12 -> clock9 @@ (0,  1) -> (-1, 0)
                 // clock9  -> clock6 @@ (-1, 0) -> (0, -1)
-                let inwards = Vec2 {
-                    x: -diff.y,
-                    y: diff.x,
-                };
+                let inwards = diff.quarter_counterclockwise();
                 let force = (ia2 - ia1) * self.config.pressure / 2.0 * inwards;
                 *self.force.get_mut(v1).unwrap() += force;
                 *self.force.get_mut(v2).unwrap() += force;

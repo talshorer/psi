@@ -7,7 +7,25 @@ pub struct Vec2 {
 }
 impl Vec2 {
     pub fn magnitude(&self) -> f64 {
-        f64::sqrt(self.x * self.x + self.y * self.y)
+        f64::sqrt(self.dot(*self))
+    }
+
+    pub const fn dot(&self, rhs: Self) -> f64 {
+        self.x * rhs.x + self.y * rhs.y
+    }
+
+    pub const fn quarter_counterclockwise(&self) -> Self {
+        Self {
+            x: -self.y,
+            y: self.x,
+        }
+    }
+
+    pub const fn quarter_clockwise(&self) -> Self {
+        Self {
+            x: self.y,
+            y: -self.x,
+        }
     }
 }
 
@@ -61,7 +79,7 @@ pub struct NormalizedVec2(Vec2);
 
 impl NormalizedVec2 {
     pub const fn const_new(v: Vec2) -> Option<Self> {
-        if (v.x * v.x + v.y * v.y) == 1.0 {
+        if (v.dot(v)) == 1.0 {
             Some(Self(v))
         } else {
             None
@@ -71,7 +89,7 @@ impl NormalizedVec2 {
 
 impl From<Vec2> for NormalizedVec2 {
     fn from(v: Vec2) -> Self {
-        let scale = (v.x * v.x + v.y * v.y).sqrt();
+        let scale = v.magnitude();
         Self((1.0 / scale) * v)
     }
 }
