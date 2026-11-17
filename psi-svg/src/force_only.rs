@@ -177,34 +177,57 @@ impl CellDataBuilder {
     }
 }
 
-pub(crate) struct ForceOnlyConfig {
+#[derive(serde::Deserialize)]
+pub struct ForceOnlyConfig {
+    #[serde(default = "ForceOnlyConfig::default_spring_force")]
     spring_force: f64,
+    #[serde(default = "ForceOnlyConfig::default_pressure")]
     pressure: f64,
+    #[serde(default = "ForceOnlyConfig::default_spring_force2")]
     spring_force2: f64,
+    #[serde(default = "ForceOnlyConfig::default_edge_push_force")]
     edge_push_force: f64,
+    #[serde(default = "ForceOnlyConfig::default_spring_iters")]
     spring_iters: usize,
+    #[serde(default = "ForceOnlyConfig::default_deflate_iters")]
     deflate_iters: usize,
+}
+
+impl ForceOnlyConfig {
+    const fn default_spring_force() -> f64 {
+        0.1
+    }
+
+    const fn default_pressure() -> f64 {
+        3000.0
+    }
+
+    const fn default_spring_force2() -> f64 {
+        0.01
+    }
+
+    const fn default_edge_push_force() -> f64 {
+        0.5
+    }
+
+    const fn default_spring_iters() -> usize {
+        100
+    }
+
+    const fn default_deflate_iters() -> usize {
+        100
+    }
 }
 
 impl Default for ForceOnlyConfig {
     fn default() -> Self {
-        fn from_env<T>(env: &str, default: T) -> T
-        where
-            T: std::str::FromStr,
-        {
-            std::env::var(env)
-                .ok()
-                .and_then(|s| s.parse().ok())
-                .unwrap_or(default)
-        }
-
         Self {
-            spring_force: from_env("FO_SPRING_FORCE", 0.1),
-            pressure: from_env("FO_PRESSURE", 3000.0),
-            spring_force2: from_env("FO_SPRING_FORCE2", 0.01),
-            edge_push_force: from_env("FO_EDGE_PUSH_FORCE", 0.5),
-            spring_iters: from_env("FO_SPRING_ITERS", 100),
-            deflate_iters: from_env("FO_DEFLATE_ITERS", 100),
+            spring_force: Self::default_spring_force(),
+            pressure: Self::default_pressure(),
+            spring_force2: Self::default_spring_force2(),
+            edge_push_force: Self::default_edge_push_force(),
+            spring_iters: Self::default_spring_iters(),
+            deflate_iters: Self::default_deflate_iters(),
         }
     }
 }
@@ -214,20 +237,24 @@ struct Graph<'a> {
     bb: &'a BoundingBox,
     vertices: BTreeMap<VertexKey, VertexData>,
     cells: BTreeMap<LandNum, CellData>,
-    config: ForceOnlyConfig,
+    config: &'a ForceOnlyConfig,
     position: HashMap<VertexKey, Vec2>,
     force: HashMap<VertexKey, Vec2>,
 }
 
 impl<'a> Graph<'a> {
-    fn build(layout: &'a Layout, bb: &'a BoundingBox) -> Result<Self, EnclaveUnsupported> {
+    fn build(
+        layout: &'a Layout,
+        bb: &'a BoundingBox,
+        config: &'a ForceOnlyConfig,
+    ) -> Result<Self, EnclaveUnsupported> {
         // TODO dedup candidate with `for_seg_vor`
         const RIGHT: NormalizedVec2 = NormalizedVec2::const_new(Vec2 { x: 1.0, y: 0.0 }).unwrap();
         const LEFT: NormalizedVec2 = NormalizedVec2::const_new(Vec2 { x: -1.0, y: 0.0 }).unwrap();
         const UP: NormalizedVec2 = NormalizedVec2::const_new(Vec2 { x: 0.0, y: 1.0 }).unwrap();
         const DOWN: NormalizedVec2 = NormalizedVec2::const_new(Vec2 { x: 0.0, y: -1.0 }).unwrap();
 
-        GraphBuilder::new(layout, bb)
+        GraphBuilder::new(layout, bb, config)
             .corner(
                 Corner::Clock1,
                 Vec2 { x: 0.0, y: bb.side },
@@ -416,6 +443,7 @@ impl<'a> Graph<'a> {
 struct GraphBuilder<'a> {
     layout: &'a Layout,
     bb: &'a BoundingBox,
+    config: &'a ForceOnlyConfig,
     vertices: BTreeMap<VertexKey, VertexDataBuilder>,
     cell_edges: BTreeMap<CellKey, CellDataBuilder>,
     boundaries: HashMap<BoundaryKey, Vec<VertexKey>>,
@@ -434,10 +462,11 @@ enum VertexAnchor {
 
 // TODO dedup as much as possible with `for_seg_vor`
 impl<'a> GraphBuilder<'a> {
-    fn new(layout: &'a Layout, bb: &'a BoundingBox) -> Self {
+    fn new(layout: &'a Layout, bb: &'a BoundingBox, config: &'a ForceOnlyConfig) -> Self {
         Self {
             layout,
             bb,
+            config,
             vertices: Default::default(),
             boundaries: Default::default(),
             cell_edges: Default::default(),
@@ -667,7 +696,7 @@ impl<'a> GraphBuilder<'a> {
                 .map(|(k, v)| (*k, v.data()))
                 .collect(),
             cells: lands,
-            config: ForceOnlyConfig::default(),
+            config: self.config,
             position: self
                 .vertices
                 .iter()
@@ -688,8 +717,12 @@ pub enum ForceOnlyError {
     EnclaveUnsupported(#[from] EnclaveUnsupported),
 }
 
-pub(crate) fn force_only(layout: &Layout, bb: &BoundingBox) -> Result<PolyLands, ForceOnlyError> {
-    let mut graph = Graph::build(layout, bb)?;
+pub(crate) fn force_only(
+    layout: &Layout,
+    bb: &BoundingBox,
+    config: &ForceOnlyConfig,
+) -> Result<PolyLands, ForceOnlyError> {
+    let mut graph = Graph::build(layout, bb, config)?;
     graph.evolve();
     Ok(PolyLands(graph.polys()))
 }

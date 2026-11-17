@@ -13,6 +13,8 @@ readme.workspace = true
 boostvoronoi.workspace = true
 clap.workspace = true
 force_graph.workspace = true
+json5.workspace = true
+serde.workspace = true
 thiserror.workspace = true
 
 psi-topology = { path = "../psi-topology" }

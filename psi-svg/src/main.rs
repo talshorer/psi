@@ -1,3 +1,9 @@
+use std::{
+    error::Error,
+    fs,
+    path::{Path, PathBuf},
+};
+
 use clap::{Parser, ValueEnum};
 use psi_svg::PsiSvgAlgo;
 
@@ -14,28 +20,27 @@ enum Layout {
     H,
 }
 
-#[derive(Clone, ValueEnum)]
+#[derive(Default, Clone, ValueEnum)]
 #[value(rename_all = "snake")]
 enum Algo {
     ForSegVor,
+    #[default]
     ForceOnly,
 }
 
-impl Default for Algo {
-    fn default() -> Self {
-        match PsiSvgAlgo::default() {
-            PsiSvgAlgo::ForSegVor => Self::ForSegVor,
-            PsiSvgAlgo::ForceOnly => Self::ForceOnly,
-        }
-    }
-}
-
-impl From<Algo> for PsiSvgAlgo {
-    fn from(value: Algo) -> Self {
-        match value {
-            Algo::ForSegVor => Self::ForSegVor,
-            Algo::ForceOnly => Self::ForceOnly,
-        }
+impl Algo {
+    fn algo(self, config: Option<&Path>) -> Result<PsiSvgAlgo, Box<dyn Error>> {
+        Ok(match self {
+            Self::ForSegVor => PsiSvgAlgo::ForSegVor,
+            Self::ForceOnly => PsiSvgAlgo::ForceOnly(
+                config
+                    .map(fs::read_to_string)
+                    .transpose()?
+                    .map(|data| json5::from_str(&data))
+                    .transpose()?
+                    .unwrap_or_default(),
+            ),
+        })
     }
 }
 
@@ -44,6 +49,10 @@ struct Args {
     #[arg(long, short)]
     /// Algorithm to use
     algo: Option<Algo>,
+    /// Algo config
+    #[arg(long, short)]
+    config: Option<PathBuf>,
+    /// Board tilt angle (degrees)
     #[arg(long, short)]
     theta: Option<u32>,
     /// Board layout
@@ -67,7 +76,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         &layout,
         700.0,
         args.theta.unwrap_or(60) as f64 * std::f64::consts::PI / 180.0,
-        args.algo.unwrap_or_default().into(),
+        &args.algo.unwrap_or_default().algo(args.config.as_deref())?,
     )?;
     print!("{}", svg);
     Ok(())

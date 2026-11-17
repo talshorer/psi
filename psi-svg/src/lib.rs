@@ -146,24 +146,28 @@ pub enum PsiSvgError {
     Fmt(#[from] std::fmt::Error),
 }
 
-#[derive(Default, Clone, Copy)]
 pub enum PsiSvgAlgo {
     ForSegVor,
-    #[default]
-    ForceOnly,
+    ForceOnly(force_only::ForceOnlyConfig),
+}
+
+impl Default for PsiSvgAlgo {
+    fn default() -> Self {
+        Self::ForceOnly(Default::default())
+    }
 }
 
 pub fn from_layout(
     layout: &Layout,
     scale: f64,
     theta: f64,
-    algo: PsiSvgAlgo,
+    algo: &PsiSvgAlgo,
 ) -> Result<String, PsiSvgError> {
     let bb = BoundingBox::new(scale);
     let tilt = Tilt::new(theta);
     let poly_lands = match algo {
         PsiSvgAlgo::ForSegVor => for_seg_vor::for_seg_vor(layout, &bb)?,
-        PsiSvgAlgo::ForceOnly => force_only::force_only(layout, &bb)?,
+        PsiSvgAlgo::ForceOnly(config) => force_only::force_only(layout, &bb, config)?,
     };
     let svg = emit(poly_lands, &bb, &tilt)?;
     Ok(svg)
@@ -176,7 +180,10 @@ mod tests {
     use super::*;
 
     #[rstest::rstest]
-    fn consistent_output(#[values(PsiSvgAlgo::ForSegVor, PsiSvgAlgo::ForceOnly)] algo: PsiSvgAlgo) {
+    fn consistent_output(
+        #[values(PsiSvgAlgo::ForSegVor, PsiSvgAlgo::ForceOnly(Default::default()))]
+        algo: PsiSvgAlgo,
+    ) {
         const SCALE: f64 = 1000.0;
         const THETA: f64 = std::f64::consts::FRAC_PI_2;
         let mut outputs = HashSet::new();
@@ -190,7 +197,7 @@ mod tests {
             psi_topology::layout::data::G.layout(),
             psi_topology::layout::data::H.layout(),
         ] {
-            let factory = || from_layout(&layout, SCALE, THETA, algo).unwrap();
+            let factory = || from_layout(&layout, SCALE, THETA, &algo).unwrap();
             let svg = factory();
             assert!(outputs.insert(svg.clone()));
             for _ in 0..2 {
