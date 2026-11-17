@@ -354,6 +354,10 @@ impl<'a> Graph<'a> {
     }
 
     fn orient_cells(&mut self) {
+        fn idx_wraparound(len: usize, idx1: usize, idx2: usize) -> bool {
+            idx1 == 0 && idx2 == len - 1
+        }
+
         for data in self.cells.values_mut() {
             // `shoelace_area` is negative for a clockwise polygon.
             if data.shoelace_area(&self.position) < 0.0 {
@@ -362,7 +366,10 @@ impl<'a> Graph<'a> {
             for (v1, v2) in data.links.values_mut() {
                 let idx1 = data.poly_vertices.iter().position(|v| *v == *v1).unwrap();
                 let idx2 = data.poly_vertices.iter().position(|v| *v == *v2).unwrap();
-                if idx1 > idx2 || (idx1 == 0 && idx2 == data.poly_vertices.len() - 1) {
+                let poly_len = data.poly_vertices.len();
+                if (idx1 > idx2 && !idx_wraparound(poly_len, idx2, idx1))
+                    || idx_wraparound(poly_len, idx1, idx2)
+                {
                     std::mem::swap(v1, v2);
                 }
             }
