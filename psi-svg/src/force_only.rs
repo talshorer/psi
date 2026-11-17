@@ -390,11 +390,12 @@ impl<'a> Graph<'a> {
 
     fn polys(&self) -> BTreeMap<LandNum, (Terrain, Poly)> {
         let mut polys = BTreeMap::new();
-        assert!(
-            self.position
-                .values()
-                .all(|v| v.x.abs() <= self.bb.side && v.y.abs() <= self.bb.side)
-        );
+        for (v, p) in &self.position {
+            assert!(
+                p.x >= 0.0 && p.x <= self.bb.side && p.y >= 0.0 && p.y <= self.bb.side,
+                "{v:?} {p:?}",
+            )
+        }
         for (land, data) in &self.cells {
             let terrain = self.layout.terrains[land];
             let mut poly = PolyBuilder::default();
