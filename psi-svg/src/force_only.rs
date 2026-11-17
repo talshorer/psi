@@ -574,6 +574,52 @@ impl<'a> GraphBuilder<'a> {
                         vertices.push(key);
                     }
                 }
+                if vertices.len() == 3 {
+                    // Consider a layout like
+                    // ┏━━━┳━━━┓
+                    // ┃ ┏━┻━┓2┃
+                    // ┃1┃ 4 ┣━┫
+                    // ┃ ┗━┳━┛3┃
+                    // ┗━━━┻━━━┛
+                    // When we consider the vertices connecting 1 and 2, we will find that 3
+                    // is adjacent to both, so we will add a (1,2,3) vertex.
+                    // For this to happen, there must be a land adjacent to only three other lands
+                    // that are all adjacent to each other, enclaving it.
+                    // Find and remove the bogus vertex.
+                    let mut it = vertices
+                        .iter()
+                        .flat_map(VertexKey::iter)
+                        .copied()
+                        .filter_map(|cell| match cell {
+                            CellKey::Land(land) => {
+                                (![*land1, *land2].contains(&land)).then_some(land)
+                            }
+                            CellKey::Edge(_) => None,
+                        })
+                        .filter(|land| {
+                            self.layout
+                                .edges
+                                .values()
+                                .all(|edge| !edge.lands.contains(land))
+                        })
+                        .filter(|land| !matches!(self.layout.terrains[land], Terrain::Ocean))
+                        .filter(|land| self.layout.internal_adjacencies[land].len() == 3);
+                    let land3 = it.next().unwrap();
+                    assert!(it.next().is_none());
+                    drop(it);
+                    let mut it = self.layout.internal_adjacencies[&land3]
+                        .iter()
+                        .filter(|land| ![*land1, *land2].contains(land));
+                    let land4 = it.next().copied().unwrap();
+                    assert!(it.next().is_none());
+                    let culprit = VertexKey::new([
+                        CellKey::Land(*land1),
+                        CellKey::Land(*land2),
+                        CellKey::Land(land4),
+                    ]);
+                    vertices.retain(|vertex| *vertex != culprit);
+                    self.vertices.remove(&culprit);
+                }
                 assert!(vertices.len() % 2 == 0);
                 let Some([v1, v2]) = vertices.as_array() else {
                     // Consider a layout like
