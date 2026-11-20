@@ -603,7 +603,7 @@ impl<'a> GraphBuilder<'a> {
                         vertices.push(key);
                     }
                 }
-                if vertices.len() == 3 {
+                if vertices.len() > 2 {
                     // Consider a layout like
                     // ┏━━━┳━━━┓
                     // ┃ ┏━┻━┓2┃
@@ -615,7 +615,7 @@ impl<'a> GraphBuilder<'a> {
                     // For this to happen, there must be a land adjacent to only three other lands
                     // that are all adjacent to each other, enclaving it.
                     // Find and remove the bogus vertex.
-                    let mut it = vertices
+                    for land3 in vertices
                         .iter()
                         .flat_map(VertexKey::iter)
                         .copied()
@@ -632,25 +632,31 @@ impl<'a> GraphBuilder<'a> {
                                 .all(|edge| !edge.lands.contains(land))
                         })
                         .filter(|land| !matches!(self.layout.terrains[land], Terrain::Ocean))
-                        .filter(|land| self.layout.internal_adjacencies[land].len() == 3);
-                    let land3 = it.next().unwrap();
-                    assert!(it.next().is_none());
-                    drop(it);
-                    let mut it = self.layout.internal_adjacencies[&land3]
-                        .iter()
-                        .filter(|land| ![*land1, *land2].contains(land));
-                    let land4 = it.next().copied().unwrap();
-                    assert!(it.next().is_none());
-                    let culprit = VertexKey::new([
-                        CellKey::Land(*land1),
-                        CellKey::Land(*land2),
-                        CellKey::Land(land4),
-                    ]);
-                    vertices.retain(|vertex| *vertex != culprit);
-                    self.vertices.remove(&culprit);
+                        .filter(|land| self.layout.internal_adjacencies[land].len() == 3)
+                        .collect::<Vec<_>>()
+                    {
+                        let mut it = self.layout.internal_adjacencies[&land3]
+                            .iter()
+                            .filter(|land| ![*land1, *land2].contains(land));
+                        let land4 = it.next().copied().unwrap();
+                        if it.next().is_some() {
+                            // A triple-enclave must have a single culprit.
+                            continue;
+                        }
+                        let culprit = VertexKey::new([
+                            CellKey::Land(*land1),
+                            CellKey::Land(*land2),
+                            CellKey::Land(land4),
+                        ]);
+                        vertices.retain(|vertex| *vertex != culprit);
+                        self.vertices.remove(&culprit);
+                    }
                 }
                 assert!(vertices.len() % 2 == 0);
                 let Some([v1, v2]) = vertices.as_array() else {
+                    eprintln!(
+                        "DEBUG-tals land1: {land1:?}, land2: {land2:?}, vertices: {vertices:?}"
+                    );
                     // Consider a layout like
                     // ┏━━━┳━━━┓
                     // ┃ ┏━┻━┓ ┃
