@@ -2,7 +2,7 @@ use std::fs;
 
 use clap::Parser;
 use psi_layout_gen::{
-    LayoutGenerator, LayoutGeneratorBalance, LayoutGeneratorConfig,
+    LayoutGenerator, LayoutGeneratorBalance, LayoutGeneratorBalancedWeights, LayoutGeneratorConfig,
     LayoutGeneratorUnbalancedWeights, WeightedOption,
 };
 use rand::Rng as _;
@@ -94,7 +94,46 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     ],
                 })
             } else {
-                LayoutGeneratorBalance::Balanced
+                LayoutGeneratorBalance::Balanced(LayoutGeneratorBalancedWeights {
+                    envelope_count: vec![
+                        WeightedOption {
+                            value: 5,
+                            weight: 1,
+                        },
+                        WeightedOption {
+                            value: 6,
+                            weight: 6,
+                        },
+                        WeightedOption {
+                            value: 7,
+                            weight: 1,
+                        },
+                    ],
+                    edge_clock3_count: vec![
+                        WeightedOption {
+                            value: 2,
+                            weight: 4,
+                        },
+                        WeightedOption {
+                            value: 3,
+                            weight: 11,
+                        },
+                        WeightedOption {
+                            value: 4,
+                            weight: 1,
+                        },
+                    ],
+                    edge_clock6_count: vec![
+                        WeightedOption {
+                            value: 2,
+                            weight: 5,
+                        },
+                        WeightedOption {
+                            value: 3,
+                            weight: 3,
+                        },
+                    ],
+                })
             },
             dist_step: 0.2,
         },

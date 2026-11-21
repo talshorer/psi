@@ -184,6 +184,12 @@ pub struct WeightedOption<T> {
     pub weight: u64,
 }
 
+pub struct LayoutGeneratorBalancedWeights {
+    pub envelope_count: Vec<WeightedOption<usize>>,
+    pub edge_clock3_count: Vec<WeightedOption<usize>>,
+    pub edge_clock6_count: Vec<WeightedOption<usize>>,
+}
+
 pub struct LayoutGeneratorUnbalancedWeights {
     pub coastal_count: Vec<WeightedOption<usize>>,
     pub land_count: Vec<WeightedOption<usize>>,
@@ -192,7 +198,7 @@ pub struct LayoutGeneratorUnbalancedWeights {
 }
 
 pub enum LayoutGeneratorBalance {
-    Balanced,
+    Balanced(LayoutGeneratorBalancedWeights),
     Unbalanced(LayoutGeneratorUnbalancedWeights),
 }
 
@@ -206,7 +212,7 @@ impl LayoutGeneratorBalance {
 
     fn coastal_count(&self, rng: &mut Rng) -> usize {
         match self {
-            LayoutGeneratorBalance::Balanced => 3,
+            LayoutGeneratorBalance::Balanced(_) => 3,
             LayoutGeneratorBalance::Unbalanced(weights) => {
                 Self::weighted(rng, &weights.coastal_count)
             }
@@ -215,23 +221,31 @@ impl LayoutGeneratorBalance {
 
     fn land_count(&self, rng: &mut Rng) -> usize {
         match self {
-            LayoutGeneratorBalance::Balanced => 8,
+            LayoutGeneratorBalance::Balanced(_) => 8,
             LayoutGeneratorBalance::Unbalanced(weights) => Self::weighted(rng, &weights.land_count),
         }
     }
 
-    fn edge_land_count(&self, rng: &mut Rng) -> usize {
+    fn envelope_counts(&self, rng: &mut Rng) -> [usize; 3] {
         match self {
-            LayoutGeneratorBalance::Balanced => 2,
-            LayoutGeneratorBalance::Unbalanced(weights) => {
-                Self::weighted(rng, &weights.edge_land_count)
+            LayoutGeneratorBalance::Balanced(weights) => {
+                let total = Self::weighted(rng, &weights.envelope_count);
+                let clock3 = Self::weighted(rng, &weights.edge_clock3_count);
+                let clock6 = Self::weighted(rng, &weights.edge_clock6_count);
+                let clock9 = total + 2 - clock3 - clock6;
+                [clock3, clock6, clock9]
             }
+            LayoutGeneratorBalance::Unbalanced(weights) => [
+                Self::weighted(rng, &weights.edge_land_count),
+                Self::weighted(rng, &weights.edge_land_count),
+                Self::weighted(rng, &weights.edge_land_count),
+            ],
         }
     }
 
     fn terrains(&self, count: usize, rng: &mut Rng) -> Vec<char> {
         let mut terrains = match self {
-            LayoutGeneratorBalance::Balanced => {
+            LayoutGeneratorBalance::Balanced(_) => {
                 assert_eq!(count, 8);
                 vec!['M', 'M', 'J', 'J', 'S', 'S', 'W', 'W']
             }
@@ -266,8 +280,15 @@ impl LayoutGenerator {
         }
     }
 
-    fn push_edge(&mut self, scatter: &mut Scatter, edge: usize, last: bool, pos: fn(f64) -> Vec2) {
-        let count = self.config.balance.edge_land_count(&mut self.rng);
+    fn push_edge(
+        &mut self,
+        scatter: &mut Scatter,
+        envelope_counts: &[usize],
+        edge: usize,
+        last: bool,
+        pos: fn(f64) -> Vec2,
+    ) {
+        let count = envelope_counts[edge];
         self.boundaries[edge] = self.boundaries(count);
         let new_first = scatter.lands.len();
         let new_last = new_first + count - 1;
@@ -296,9 +317,19 @@ impl LayoutGenerator {
             x: 0.0,
             y: v,
         });
-        self.push_edge(&mut scatter, 0, false, |v| Vec2 { x: v, y: 1.0 });
-        self.push_edge(&mut scatter, 1, false, |v| Vec2 { x: 1.0, y: 1.0 - v });
-        self.push_edge(&mut scatter, 2, true, |v| Vec2 { x: 1.0 - v, y: 0.0 });
+        let envelope_counts = self.config.balance.envelope_counts(&mut self.rng);
+        self.push_edge(&mut scatter, &envelope_counts, 0, false, |v| Vec2 {
+            x: v,
+            y: 1.0,
+        });
+        self.push_edge(&mut scatter, &envelope_counts, 1, false, |v| Vec2 {
+            x: 1.0,
+            y: 1.0 - v,
+        });
+        self.push_edge(&mut scatter, &envelope_counts, 2, true, |v| Vec2 {
+            x: 1.0 - v,
+            y: 0.0,
+        });
         self.envelope.push(1);
         let nr_lands = self
             .config
