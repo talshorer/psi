@@ -6,6 +6,7 @@ use psi_vec::Vec2;
 mod for_seg_vor;
 mod force_only;
 mod poly;
+mod texture;
 
 use poly::{Poly, PolyBuilder};
 
@@ -119,13 +120,11 @@ fn emit(lands: PolyLands, bb: &BoundingBox, tilt: &Tilt) -> Result<String, std::
 
     writeln!(
         &mut out,
-        r#"<defs>
-         <clipPath id="board">
-             <rect x="0" y="0" width="{}" height="{}" />
-         </clipPath>
-       </defs>"#,
+        r#"<defs>\n  <clipPath id="board"><rect x="0" y="0" width="{}" height="{}" /></clipPath>\n"#,
         viewbox.x, viewbox.y,
     )?;
+    texture::write_defs(&mut out, bb.side / 700.0)?;
+    writeln!(&mut out, "</defs>")?;
 
     writeln!(&mut out, r#"<g clip-path="url(#board)">"#)?;
 
@@ -134,13 +133,7 @@ fn emit(lands: PolyLands, bb: &BoundingBox, tilt: &Tilt) -> Result<String, std::
         .values()
         .chain(std::iter::once(&(Terrain::Ocean, ocean(bb, tilt))))
     {
-        let fill = match terrain {
-            Terrain::Jungle => "green",
-            Terrain::Mountain => "grey",
-            Terrain::Sands => "gold",
-            Terrain::Wetlands => "teal",
-            Terrain::Ocean => "blue",
-        };
+        let fill = texture::fill(*terrain);
 
         let path = poly_path(poly, bb, tilt)?;
         writeln!(
