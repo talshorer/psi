@@ -10,6 +10,8 @@ mod texture;
 
 use poly::{Poly, PolyBuilder};
 
+pub use texture::PsiSvgTextures;
+
 struct BoundingBox {
     side: f64,
     per_boundary: f64,
@@ -103,7 +105,12 @@ fn poly_path(poly: &Poly, bb: &BoundingBox, tilt: &Tilt) -> Result<String, std::
 
 struct PolyLands(BTreeMap<LandNum, (Terrain, Poly)>);
 
-fn emit(lands: PolyLands, bb: &BoundingBox, tilt: &Tilt) -> Result<String, std::fmt::Error> {
+fn emit(
+    lands: PolyLands,
+    bb: &BoundingBox,
+    tilt: &Tilt,
+    textures: &PsiSvgTextures<'_>,
+) -> Result<String, std::fmt::Error> {
     let mut out = String::new();
     let viewbox = tilt.transform(Vec2 {
         x: bb.side,
@@ -123,7 +130,7 @@ fn emit(lands: PolyLands, bb: &BoundingBox, tilt: &Tilt) -> Result<String, std::
         r#"<defs>\n  <clipPath id="board"><rect x="0" y="0" width="{}" height="{}" /></clipPath>\n"#,
         viewbox.x, viewbox.y,
     )?;
-    texture::write_defs(&mut out, bb.side / 700.0)?;
+    textures.write_defs(&mut out, bb.side / 700.0)?;
     writeln!(&mut out, "</defs>")?;
 
     writeln!(&mut out, r#"<g clip-path="url(#board)">"#)?;
@@ -174,6 +181,7 @@ pub fn from_layout(
     scale: f64,
     theta: f64,
     algo: &PsiSvgAlgo,
+    textures: &PsiSvgTextures<'_>,
 ) -> Result<String, PsiSvgError> {
     let bb = BoundingBox::new(scale);
     let tilt = Tilt::new(theta);
@@ -181,7 +189,7 @@ pub fn from_layout(
         PsiSvgAlgo::ForSegVor => for_seg_vor::for_seg_vor(layout, &bb)?,
         PsiSvgAlgo::ForceOnly(config) => force_only::force_only(layout, &bb, config)?,
     };
-    let svg = emit(poly_lands, &bb, &tilt)?;
+    let svg = emit(poly_lands, &bb, &tilt, textures)?;
     Ok(svg)
 }
 
@@ -218,7 +226,8 @@ mod tests {
             psi_topology::layout::data::G.layout(),
             psi_topology::layout::data::H.layout(),
         ] {
-            let factory = || from_layout(&layout, SCALE, THETA, &algo).unwrap();
+            let factory =
+                || from_layout(&layout, SCALE, THETA, &algo, &PsiSvgTextures::default()).unwrap();
             let svg = factory();
             assert!(outputs.insert(svg.clone()));
             for _ in 0..2 {

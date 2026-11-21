@@ -5,7 +5,7 @@ use std::{
 };
 
 use clap::{Parser, ValueEnum};
-use psi_svg::PsiSvgAlgo;
+use psi_svg::{PsiSvgAlgo, PsiSvgTextures};
 
 #[derive(Clone, ValueEnum)]
 #[value(rename_all = "UPPER")]
@@ -77,6 +77,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         700.0,
         args.theta.unwrap_or(60) as f64 * std::f64::consts::PI / 180.0,
         &args.algo.unwrap_or_default().algo(args.config.as_deref())?,
+        &PsiSvgTextures::default(),
     )?;
     print!("{}", svg);
     Ok(())

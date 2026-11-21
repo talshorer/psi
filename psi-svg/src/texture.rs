@@ -1,8 +1,68 @@
-use std::fmt::Write as _;
 use std::io::Cursor;
+use std::{borrow::Cow, fmt::Write as _};
 
 use base64::{Engine as _, engine::general_purpose::STANDARD};
 use psi_topology::layout::Terrain;
+
+#[derive(Default)]
+pub struct PsiSvgTextures<'a> {
+    pub jungle: Option<Cow<'a, [u8]>>,
+    pub mountain: Option<Cow<'a, [u8]>>,
+    pub sands: Option<Cow<'a, [u8]>>,
+    pub wetlands: Option<Cow<'a, [u8]>>,
+    pub ocean: Option<Cow<'a, [u8]>>,
+}
+
+impl<'a> PsiSvgTextures<'a> {
+    pub(crate) fn write_defs(&self, out: &mut String, scale: f64) -> std::fmt::Result {
+        write_texture_pattern(
+            out,
+            "jungle",
+            self.jungle
+                .as_ref()
+                .map(Cow::as_ref)
+                .unwrap_or(include_bytes!("../assets/terrain-textures/jungle.png")),
+            scale,
+        )?;
+        write_texture_pattern(
+            out,
+            "mountain",
+            self.mountain
+                .as_ref()
+                .map(Cow::as_ref)
+                .unwrap_or(include_bytes!("../assets/terrain-textures/mountain.png")),
+            scale,
+        )?;
+        write_texture_pattern(
+            out,
+            "sands",
+            self.sands
+                .as_ref()
+                .map(Cow::as_ref)
+                .unwrap_or(include_bytes!("../assets/terrain-textures/sands.png")),
+            scale,
+        )?;
+        write_texture_pattern(
+            out,
+            "wetlands",
+            self.wetlands
+                .as_ref()
+                .map(Cow::as_ref)
+                .unwrap_or(include_bytes!("../assets/terrain-textures/wetlands.png")),
+            scale,
+        )?;
+        write_texture_pattern(
+            out,
+            "ocean",
+            self.ocean
+                .as_ref()
+                .map(Cow::as_ref)
+                .unwrap_or(include_bytes!("../assets/terrain-textures/ocean.png")),
+            scale,
+        )?;
+        Ok(())
+    }
+}
 
 pub(crate) fn fill(terrain: Terrain) -> &'static str {
     match terrain {
@@ -12,40 +72,6 @@ pub(crate) fn fill(terrain: Terrain) -> &'static str {
         Terrain::Wetlands => "url(#texture-wetlands)",
         Terrain::Ocean => "url(#texture-ocean)",
     }
-}
-
-pub(crate) fn write_defs(out: &mut String, scale: f64) -> std::fmt::Result {
-    write_texture_pattern(
-        out,
-        "jungle",
-        include_bytes!("../assets/terrain-textures/jungle.png"),
-        scale,
-    )?;
-    write_texture_pattern(
-        out,
-        "mountain",
-        include_bytes!("../assets/terrain-textures/mountain.png"),
-        scale,
-    )?;
-    write_texture_pattern(
-        out,
-        "sands",
-        include_bytes!("../assets/terrain-textures/sands.png"),
-        scale,
-    )?;
-    write_texture_pattern(
-        out,
-        "wetlands",
-        include_bytes!("../assets/terrain-textures/wetlands.png"),
-        scale,
-    )?;
-    write_texture_pattern(
-        out,
-        "ocean",
-        include_bytes!("../assets/terrain-textures/ocean.png"),
-        scale,
-    )?;
-    Ok(())
 }
 
 fn write_texture_pattern(out: &mut String, id: &str, png: &[u8], scale: f64) -> std::fmt::Result {

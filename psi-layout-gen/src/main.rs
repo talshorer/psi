@@ -1,10 +1,15 @@
-use std::fs;
+use std::{
+    borrow::Cow,
+    fs,
+    path::{Path, PathBuf},
+};
 
 use clap::Parser;
 use psi_layout_gen::{
     LayoutGenerator, LayoutGeneratorBalance, LayoutGeneratorBalancedWeights, LayoutGeneratorConfig,
     LayoutGeneratorUnbalancedWeights, WeightedOption,
 };
+use psi_svg::PsiSvgTextures;
 use rand::Rng as _;
 
 #[derive(Parser)]
@@ -15,6 +20,13 @@ struct Args {
     #[arg(long, short)]
     /// Seed to use
     seed: Option<u64>,
+    #[arg(long, short)]
+    /// Texture directory to use
+    textures: Option<PathBuf>,
+}
+
+fn texture(path: &Path, terrain: &str) -> Option<Vec<u8>> {
+    std::fs::read(path.join(terrain)).ok()
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -140,6 +152,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     )
     .generate_layout();
 
+    let textures = args
+        .textures
+        .as_ref()
+        .map(|path| PsiSvgTextures {
+            jungle: texture(&path, "jungle.png").map(Cow::Owned),
+            mountain: texture(&path, "mountain.png").map(Cow::Owned),
+            sands: texture(&path, "sands.png").map(Cow::Owned),
+            wetlands: texture(&path, "wetlands.png").map(Cow::Owned),
+            ocean: texture(&path, "ocean.png").map(Cow::Owned),
+        })
+        .unwrap_or_default();
+
     let svg = psi_svg::from_layout(
         &layout,
         700.0,
@@ -153,6 +177,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .transpose()?
                 .unwrap_or_default(),
         ),
+        &textures,
     )?;
     print!("{}", svg);
     Ok(())
