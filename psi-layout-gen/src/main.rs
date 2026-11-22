@@ -156,11 +156,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .textures
         .as_ref()
         .map(|path| PsiSvgTextures {
-            jungle: texture(&path, "jungle.png").map(Cow::Owned),
-            mountain: texture(&path, "mountain.png").map(Cow::Owned),
-            sands: texture(&path, "sands.png").map(Cow::Owned),
-            wetlands: texture(&path, "wetlands.png").map(Cow::Owned),
-            ocean: texture(&path, "ocean.png").map(Cow::Owned),
+            jungle: texture(path, "jungle.png").map(Cow::Owned),
+            mountain: texture(path, "mountain.png").map(Cow::Owned),
+            sands: texture(path, "sands.png").map(Cow::Owned),
+            wetlands: texture(path, "wetlands.png").map(Cow::Owned),
+            ocean: texture(path, "ocean.png").map(Cow::Owned),
         })
         .unwrap_or_default();
 

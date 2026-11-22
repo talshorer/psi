@@ -363,7 +363,7 @@ impl LayoutGenerator {
                 .iter()
                 .map(|(i, j)| (*i + 1, *j + 1))
                 .collect(),
-            terrains: terrains,
+            terrains,
             coastals: (1..=coastals).collect(),
         }
         .layout()
