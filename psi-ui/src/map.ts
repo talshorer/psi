@@ -2,35 +2,30 @@ import type { Board } from "./types";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
-const BOARD_RADIUS = 150;
-
-const SIN_60 = Math.sin(Math.PI / 3);
-const COS_60 = Math.cos(Math.PI / 3);
-const SQRT3 = Math.sqrt(3);
-const SIN_60_REDUCED = SIN_60 / SQRT3;
-const COS_60_REDUCED = COS_60 / SQRT3;
-
-const BOARD_POLYGON_POINTS = [
-    [-COS_60_REDUCED * BOARD_RADIUS, SIN_60_REDUCED * BOARD_RADIUS],
-    [SIN_60 * BOARD_RADIUS, COS_60 * BOARD_RADIUS],
-    [COS_60_REDUCED * BOARD_RADIUS, -SIN_60_REDUCED * BOARD_RADIUS],
-    [-SIN_60 * BOARD_RADIUS, -COS_60 * BOARD_RADIUS],
-];
-
-function createBoardElement(board: Board): SVGGElement {
+function createBoardElement(board: Board, svgMarkup: string): SVGGElement {
     const group = document.createElementNS(SVG_NS, "g");
     group.dataset.boardId = board.id;
     group.classList.add("board");
 
-    const polygon = document.createElementNS(SVG_NS, "polygon");
+    const sourceDoc = new DOMParser().parseFromString(
+        svgMarkup,
+        "image/svg+xml",
+    );
+    const root = sourceDoc.documentElement as unknown as SVGSVGElement;
+    if (root.localName !== "svg") {
+        throw new Error("Could not parse rendered SVG");
+    }
+    const { width, height } = root.viewBox.baseVal;
 
-    const points = BOARD_POLYGON_POINTS.map(([x, y]) => `${x},${y}`).join(" ");
-
-    polygon.setAttribute("points", points);
-    group.appendChild(polygon);
+    const image = document.createElementNS(SVG_NS, "image");
+    image.setAttribute("href", URL.createObjectURL(new Blob([svgMarkup], { type: "image/svg+xml" })));
+    image.setAttribute("x", `${-width / 2}`);
+    image.setAttribute("y", `${-height / 2}`);
+    image.setAttribute("width", `${width}`);
+    image.setAttribute("height", `${height}`);
+    group.appendChild(image);
 
     updateBoardElement(group, board);
-
     return group;
 }
 
@@ -41,19 +36,28 @@ function updateBoardElement(group: SVGGElement, board: Board): void {
     );
 }
 
-export function renderBoards(boards: Board[]): void {
+export function renderBoards(boards: Board[], renderSvg: (board: Board) => string): void {
     const svg = document.querySelector<SVGSVGElement>("#boards");
 
     if (!svg) {
         throw new Error("Could not find #boards");
     }
 
+    const oldUrls = [...svg.querySelectorAll("image")]
+        .map((image) => image.getAttribute("href"))
+        .filter((url): url is string => url?.startsWith("blob:") ?? false);
+
     svg.replaceChildren();
 
+    for (const url of oldUrls) {
+        URL.revokeObjectURL(url);
+    }
+
     for (const board of boards) {
-        svg.appendChild(createBoardElement(board));
+        svg.appendChild(createBoardElement(board, renderSvg(board)));
     }
 }
+
 
 export function getMapElement(): SVGSVGElement {
     const svg = document.querySelector<SVGSVGElement>("#map");

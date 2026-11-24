@@ -4,12 +4,14 @@ export const mapState: MapState = {
     boards: [
         {
             id: "board-1",
+            layout: "A",
             x: 300,
             y: 250,
             rotation: 0,
         },
         {
             id: "board-2",
+            layout: "B",
             x: 600,
             y: 350,
             rotation: 0,

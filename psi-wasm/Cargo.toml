@@ -13,6 +13,8 @@ readme.workspace = true
 crate-type = ["cdylib"]
 
 [dependencies]
+serde-wasm-bindgen.workspace = true
+serde.workspace = true
 wasm-bindgen.workspace = true
 
 psi-svg = { path = "../psi-svg" }

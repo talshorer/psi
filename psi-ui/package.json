@@ -3,9 +3,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview"
+    "wasm": "cd ../psi-wasm && wasm-pack build --target web --out-dir ../psi-ui/src/wasm/pkg",
+    "dev": "npm run wasm -- --dev && vite",
+    "build": "npm run wasm && tsc && vite build"
   },
   "devDependencies": {
     "typescript": "^5",
