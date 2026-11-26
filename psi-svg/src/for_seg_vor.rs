@@ -101,11 +101,13 @@ impl<'a> Graph<'a> {
             .with_segments({
                 let mut nodes = BTreeMap::new();
                 self.inner.visit_nodes(|node| {
-                    assert!(node.x().abs() as f64 <= self.bb.side);
-                    assert!(node.y().abs() as f64 <= self.bb.side);
                     if matches!(node.data.user_data.terrain, Terrain::Ocean) {
                         return;
                     }
+                    assert!(node.x() as f64 >= 0.0);
+                    assert!(node.y() as f64 >= 0.0);
+                    assert!(node.x() as f64 <= self.bb.side);
+                    assert!(node.y() as f64 <= self.bb.side);
                     nodes.insert(
                         node.data.user_data.land,
                         (
