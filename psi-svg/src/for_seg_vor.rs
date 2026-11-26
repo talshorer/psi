@@ -93,6 +93,10 @@ impl<'a> Graph<'a> {
             })
     }
 
+    fn bvg_point(v: Vec2) -> boostvoronoi::geometry::Point<i64> {
+        boostvoronoi::geometry::Point::new(v.x as i64, v.y as i64)
+    }
+
     fn to_voronoi(
         &self,
     ) -> Result<(boostvoronoi::diagram::Diagram, VoronoiLands), boostvoronoi::BvError> {
@@ -124,21 +128,15 @@ impl<'a> Graph<'a> {
                     if let Some(anchor) = data.anchor {
                         if *point != anchor.0 {
                             lines.push(boostvoronoi::geometry::Line::new(
-                                boostvoronoi::geometry::Point::new(point.x as i64, point.y as i64),
-                                boostvoronoi::geometry::Point::new(
-                                    anchor.0.x as i64,
-                                    anchor.0.y as i64,
-                                ),
+                                Self::bvg_point(*point),
+                                Self::bvg_point(anchor.0),
                             ));
                             lands.push(*data);
                         }
                         if *point != anchor.1 {
                             lines.push(boostvoronoi::geometry::Line::new(
-                                boostvoronoi::geometry::Point::new(point.x as i64, point.y as i64),
-                                boostvoronoi::geometry::Point::new(
-                                    anchor.1.x as i64,
-                                    anchor.1.y as i64,
-                                ),
+                                Self::bvg_point(*point),
+                                Self::bvg_point(anchor.1),
                             ));
                             lands.push(*data);
                         }
@@ -166,8 +164,8 @@ impl<'a> Graph<'a> {
                         }
                         let mid = 0.5 * (*point + *adj);
                         lines.push(boostvoronoi::geometry::Line::new(
-                            boostvoronoi::geometry::Point::new(point.x as i64, point.y as i64),
-                            boostvoronoi::geometry::Point::new(mid.x as i64, mid.y as i64),
+                            Self::bvg_point(*point),
+                            Self::bvg_point(mid),
                         ));
                         lands.push(*data);
                     }
@@ -186,8 +184,8 @@ impl<'a> Graph<'a> {
                     .zip(infinity_points.iter().cycle().skip(1))
                 {
                     lines.push(boostvoronoi::geometry::Line::new(
-                        boostvoronoi::geometry::Point::new(c1.x as i64, c1.y as i64),
-                        boostvoronoi::geometry::Point::new(c2.x as i64, c2.y as i64),
+                        Self::bvg_point(*c1),
+                        Self::bvg_point(*c2),
                     ));
                 }
 
