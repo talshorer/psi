@@ -562,6 +562,7 @@ dependencies = [
  "base64",
  "boostvoronoi",
  "clap",
+ "enum-map",
  "euclid",
  "force_graph",
  "json5",

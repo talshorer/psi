@@ -16,7 +16,7 @@ use euclid::{Point2D, Scale};
 use psi_topology::layout::{Corner, Edge, LandNum, Layout, LayoutEdge, Terrain};
 
 use crate::{
-    NormalizedVec2, PER_BOUNDARY, PolyLands, Segment,
+    NormalizedVec2, PER_BOUNDARY, PolyLands, Segment, UNIT_SQUARE_CORNERS,
     poly::{Poly, PolyBuilder},
     units::{UnitSquare, UnitSquarePoint},
     within_unit_square,
@@ -51,43 +51,23 @@ impl<'a> Graph<'a> {
         const DOWN: NormalizedVec2 = NormalizedVec2::const_new(0.0, -1.0).unwrap();
 
         GraphBuilder::new(layout)
-            .corner(
-                Corner::Clock1,
-                UnitSquarePoint::new(0.0, 1.0),
-                None,
-                Some(RIGHT),
-            )
-            .corner(
-                Corner::Clock5,
-                UnitSquarePoint::new(1.0, 1.0),
-                Some(LEFT),
-                Some(DOWN),
-            )
-            .corner(
-                Corner::Clock7,
-                UnitSquarePoint::new(1.0, 0.0),
-                Some(UP),
-                Some(LEFT),
-            )
-            .corner(
-                Corner::Clock11,
-                UnitSquarePoint::new(0.0, 0.0),
-                Some(RIGHT),
-                None,
-            )
+            .corner(Corner::Clock1, None, Some(RIGHT))
+            .corner(Corner::Clock5, Some(LEFT), Some(DOWN))
+            .corner(Corner::Clock7, Some(UP), Some(LEFT))
+            .corner(Corner::Clock11, Some(RIGHT), None)
             .edge(
                 &layout.edges[Edge::Clock3],
-                UnitSquarePoint::new(0.0, 1.0),
+                UNIT_SQUARE_CORNERS[Corner::Clock1],
                 RIGHT,
             )
             .edge(
                 &layout.edges[Edge::Clock6],
-                UnitSquarePoint::new(1.0, 1.0),
+                UNIT_SQUARE_CORNERS[Corner::Clock5],
                 DOWN,
             )
             .edge(
                 &layout.edges[Edge::Clock9],
-                UnitSquarePoint::new(1.0, 0.0),
+                UNIT_SQUARE_CORNERS[Corner::Clock7],
                 LEFT,
             )
             .finalize(UnitSquarePoint::new(-PER_BOUNDARY.get(), 0.5))
@@ -226,10 +206,10 @@ impl<'a> GraphBuilder<'a> {
     fn corner(
         &mut self,
         corner: Corner,
-        point: UnitSquarePoint,
         backwards: Option<NormalizedVec2>,
         forwards: Option<NormalizedVec2>,
     ) -> &mut Self {
+        let point = UNIT_SQUARE_CORNERS[corner];
         let counter_clockwise = psi_topology::layout::COUNTER_CLOCKWISE.corner_to_edge(corner);
         let clockwise = psi_topology::layout::CLOCKWISE.corner_to_edge(corner);
         assert_eq!(backwards.is_none(), counter_clockwise.is_none());

@@ -1,7 +1,8 @@
-use std::{collections::BTreeMap, fmt::Write as _, ops::Deref};
+use std::{collections::BTreeMap, fmt::Write as _, ops::Deref, sync::LazyLock};
 
+use enum_map::{EnumMap, enum_map};
 use euclid::{Point2D, Scale, Vector2D};
-use psi_topology::layout::{Boundary, LandNum, Layout, Terrain};
+use psi_topology::layout::{Boundary, Corner, LandNum, Layout, Terrain};
 
 mod for_seg_vor;
 mod force_only;
@@ -52,6 +53,15 @@ fn within_unit_square(point: UnitSquarePoint) -> bool {
     point.x >= 0.0 && point.x <= 1.0 && point.y >= 0.0 && point.y <= 1.0
 }
 
+static UNIT_SQUARE_CORNERS: LazyLock<EnumMap<Corner, UnitSquarePoint>> = LazyLock::new(|| {
+    enum_map! {
+        Corner::Clock1 => UnitSquarePoint::new(0.0, 1.0),
+        Corner::Clock5 => UnitSquarePoint::new(1.0, 1.0),
+        Corner::Clock7 => UnitSquarePoint::new(1.0, 0.0),
+        Corner::Clock11 => UnitSquarePoint::new(0.0, 0.0),
+    }
+});
+
 struct Tilt {
     sin: f64,
     cos: f64,
@@ -72,8 +82,8 @@ impl Tilt {
 
 fn ocean(tilt: &Tilt) -> Poly {
     let mut poly = PolyBuilder::default();
-    poly.push(UnitSquarePoint::new(0.0, 0.0));
-    poly.push(UnitSquarePoint::new(0.0, 1.0));
+    poly.push(UNIT_SQUARE_CORNERS[Corner::Clock1]);
+    poly.push(UNIT_SQUARE_CORNERS[Corner::Clock11]);
     poly.push(UnitSquarePoint::new(-tilt.cos, 1.0));
     poly.poly()
 }

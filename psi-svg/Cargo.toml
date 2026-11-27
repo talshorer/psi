@@ -13,6 +13,7 @@ readme.workspace = true
 base64.workspace = true
 boostvoronoi.workspace = true
 clap.workspace = true
+enum-map.workspace = true
 euclid.workspace = true
 force_graph.workspace = true
 json5.workspace = true
