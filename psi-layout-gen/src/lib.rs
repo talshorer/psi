@@ -145,12 +145,10 @@ impl Scatter {
         };
         self.remove_legal_link((idx1, idx2));
         let seg1 = Segment(self.lands[idx1], self.lands[idx2]);
-        if !self
-            .links
-            .iter()
-            .cloned()
-            .any(|(idx3, idx4)| seg1.crosses(&Segment(self.lands[idx3], self.lands[idx4])))
-        {
+        if !self.links.iter().cloned().any(|(idx3, idx4)| {
+            seg1.crosses(&Segment(self.lands[idx3], self.lands[idx4]))
+                .is_some()
+        }) {
             self.links.push((idx1, idx2));
         };
         true

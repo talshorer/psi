@@ -39,7 +39,7 @@ impl PolyBuilder {
                     .chain(completing_segment.as_ref())
                     .map(move |seg2| (seg1, seg2))
             })
-            .any(|(seg1, seg2)| seg1.crosses(seg2))
+            .any(|(seg1, seg2)| seg1.crosses(seg2).is_some())
     }
 }
 

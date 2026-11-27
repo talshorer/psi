@@ -82,7 +82,7 @@ fn ocean(tilt: &Tilt) -> Poly {
 pub struct Segment(pub UnitSquarePoint, pub UnitSquarePoint);
 
 impl Segment {
-    pub fn crosses(&self, other: &Self) -> bool {
+    pub fn crosses(&self, other: &Self) -> Option<UnitSquarePoint> {
         // https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection#Given_two_points_on_each_line_segment
         let (v1, v2) = (self.0, self.1);
         let (v3, v4) = (other.0, other.1);
@@ -90,13 +90,13 @@ impl Segment {
         let diff2 = v4 - v3;
         let det = diff1.x * diff2.y - diff1.y * diff2.x;
         if det == 0.0 {
-            return false;
+            return None;
         }
         let t = ((v3.x - v1.x) * diff2.y - (v3.y - v1.y) * diff2.x) / det;
         let u = ((v3.x - v1.x) * diff1.y - (v3.y - v1.y) * diff1.x) / det;
         const ZERO: f64 = 0.000001;
         const ONE: f64 = 0.999999;
-        t > ZERO && t < ONE && u > ZERO && u < ONE
+        (t > ZERO && t < ONE && u > ZERO && u < ONE).then_some(v1 + (v2 - v1) * t)
     }
 }
 
