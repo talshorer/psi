@@ -1,44 +1,47 @@
 use std::{collections::BTreeMap, fmt::Write as _, ops::Deref};
 
+use euclid::{Point2D, Scale, Vector2D};
 use psi_topology::layout::{Boundary, LandNum, Layout, Terrain};
-use psi_vec::Vec2;
 
 mod for_seg_vor;
 mod force_only;
 mod poly;
 mod texture;
+mod units;
 
 use poly::{Poly, PolyBuilder};
 
 pub use texture::PsiSvgTextures;
+pub use units::UnitSquarePoint;
 
-const PER_BOUNDARY: f64 = const {
+use crate::units::{Pixel, Pure, UnitSquare};
+
+const PER_BOUNDARY: Scale<f64, Pure, UnitSquare> = const {
     assert!(Boundary::MIN == 1);
-    1.0 / (Boundary::MAX + 1) as f64
+    Scale::new(1.0 / (Boundary::MAX + 1) as f64)
 };
 
 #[derive(Debug, Clone, Copy)]
-struct NormalizedVec2(Vec2);
+struct NormalizedVec2(Vector2D<f64, Pure>);
 
 impl NormalizedVec2 {
-    const fn const_new(v: Vec2) -> Option<Self> {
-        if (v.dot(v)) == 1.0 {
-            Some(Self(v))
+    const fn const_new(x: f64, y: f64) -> Option<Self> {
+        if (x * x + y * y) == 1.0 {
+            Some(Self(Vector2D::new(x, y)))
         } else {
             None
         }
     }
 }
 
-impl From<Vec2> for NormalizedVec2 {
-    fn from(v: Vec2) -> Self {
-        let scale = v.magnitude();
-        Self((1.0 / scale) * v)
+impl<U> From<Vector2D<f64, U>> for NormalizedVec2 {
+    fn from(v: Vector2D<f64, U>) -> Self {
+        Self(v * Scale::new(1.0 / v.length()))
     }
 }
 
 impl Deref for NormalizedVec2 {
-    type Target = Vec2;
+    type Target = Vector2D<f64, Pure>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -58,23 +61,17 @@ impl Tilt {
         }
     }
 
-    fn transform(&self, v: Vec2) -> Vec2 {
-        Vec2 {
-            x: v.x + self.cos * v.y,
-            y: self.sin * v.y,
-        }
+    fn transform(&self, v: UnitSquarePoint) -> UnitSquarePoint {
+        UnitSquarePoint::new(v.x + self.cos * v.y, self.sin * v.y)
     }
 }
 
 fn ocean(tilt: &Tilt) -> Poly {
     let mut poly = PolyBuilder::default();
     let points = [
-        Vec2 { x: 0.0, y: 0.0 },
-        Vec2 { x: 0.0, y: 1.0 },
-        Vec2 {
-            x: -tilt.cos,
-            y: 1.0,
-        },
+        UnitSquarePoint::new(0.0, 0.0),
+        UnitSquarePoint::new(0.0, 1.0),
+        UnitSquarePoint::new(-tilt.cos, 1.0),
     ];
     for (v1, v2) in points.iter().zip(points.iter().cycle().skip(1)) {
         poly.push(Segment(*v1, *v2));
@@ -83,7 +80,7 @@ fn ocean(tilt: &Tilt) -> Poly {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct Segment(pub Vec2, pub Vec2);
+pub struct Segment(pub UnitSquarePoint, pub UnitSquarePoint);
 
 impl Segment {
     pub fn crosses(&self, other: &Self) -> bool {
@@ -104,14 +101,16 @@ impl Segment {
     }
 }
 
-fn poly_path(poly: &Poly, scale: f64, tilt: &Tilt) -> Result<String, std::fmt::Error> {
+type PixelScale = Scale<f64, UnitSquare, Pixel>;
+
+fn poly_path(poly: &Poly, scale: PixelScale, tilt: &Tilt) -> Result<String, std::fmt::Error> {
     let mut path = String::new();
     for (i, segment) in poly.iter().enumerate() {
         let directive = if i == 0 { 'M' } else { 'L' };
         let Segment(v0, v1) = segment;
-        let Vec2 { x: x0, y: y0 } = tilt.transform(scale * *v0);
-        let Vec2 { x: x1, y: y1 } = tilt.transform(scale * *v1);
-        let height = tilt.sin * scale;
+        let Point2D { x: x0, y: y0, .. } = tilt.transform(*v0) * scale;
+        let Point2D { x: x1, y: y1, .. } = tilt.transform(*v1) * scale;
+        let height = tilt.sin * scale.get();
         let y0 = height - y0;
         let y1 = height - y1;
         write!(&mut path, "{directive} {x0} {y0} {x1} {y1} ")?
@@ -124,12 +123,12 @@ struct PolyLands(BTreeMap<LandNum, (Terrain, Poly)>);
 
 fn emit(
     lands: PolyLands,
-    scale: f64,
+    scale: PixelScale,
     tilt: &Tilt,
     textures: &PsiSvgTextures<'_>,
 ) -> Result<String, std::fmt::Error> {
     let mut out = String::new();
-    let viewbox = tilt.transform(Vec2 { x: scale, y: scale });
+    let viewbox = tilt.transform(UnitSquarePoint::new(1.0, 1.0)) * scale;
     writeln!(
         &mut out,
         r#"<svg xmlns="http://www.w3.org/2000/svg"
@@ -197,6 +196,7 @@ pub fn from_layout(
     algo: &PsiSvgAlgo,
     textures: &PsiSvgTextures<'_>,
 ) -> Result<String, PsiSvgError> {
+    let scale = PixelScale::new(scale);
     let tilt = Tilt::new(theta);
     let poly_lands = match algo {
         PsiSvgAlgo::ForSegVor => for_seg_vor::for_seg_vor(layout)?,
@@ -215,10 +215,10 @@ mod tests {
     fn force_only() -> PsiSvgAlgo {
         let default = force_only::ForceOnlyConfig::default();
         PsiSvgAlgo::ForceOnly(force_only::ForceOnlyConfig {
-            spring_force: default.spring_force * 10.0,
-            pressure: default.pressure * 10.0,
-            spring_force2: default.spring_force2 * 10.0,
-            edge_push_force: default.edge_push_force * 10.0,
+            spring_force: default.spring_force * Scale::new(10.0),
+            pressure: default.pressure * Scale::new(10.0),
+            spring_force2: default.spring_force2 * Scale::new(10.0),
+            edge_push_force: default.edge_push_force * Scale::new(10.0),
             spring_iters: default.spring_iters / 10,
             deflate_iters: default.deflate_iters / 10,
         })

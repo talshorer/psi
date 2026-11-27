@@ -11,10 +11,10 @@ readme.workspace = true
 
 [dependencies]
 clap.workspace = true
+euclid.workspace = true
 json5.workspace = true
 rand_chacha.workspace = true
 rand.workspace = true
 
 psi-svg = { path = "../psi-svg" }
 psi-topology = { path = "../psi-topology" }
-psi-vec = { path = "../psi-vec" }

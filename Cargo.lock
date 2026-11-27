@@ -242,6 +242,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "00d174d5400e5e8fd687ad1049e2f578285fa914201b1af7e8b112a4546bd826"
 
 [[package]]
+name = "euclid"
+version = "0.22.14"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f1a05365e3b1c6d1650318537c7460c6923f1abdd272ad6842baa2b509957a06"
+dependencies = [
+ "num-traits",
+ "serde",
+]
+
+[[package]]
 name = "fdeflate"
 version = "0.3.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -537,10 +547,10 @@ name = "psi-layout-gen"
 version = "0.1.0"
 dependencies = [
  "clap",
+ "euclid",
  "json5",
  "psi-svg",
  "psi-topology",
- "psi-vec",
  "rand 0.10.4",
  "rand_chacha 0.10.0",
 ]
@@ -552,11 +562,11 @@ dependencies = [
  "base64",
  "boostvoronoi",
  "clap",
+ "euclid",
  "force_graph",
  "json5",
  "png",
  "psi-topology",
- "psi-vec",
  "rstest",
  "serde",
  "thiserror",
@@ -570,10 +580,6 @@ dependencies = [
  "enum-map",
  "thiserror",
 ]
-
-[[package]]
-name = "psi-vec"
-version = "0.1.0"
 
 [[package]]
 name = "psi-wasm"

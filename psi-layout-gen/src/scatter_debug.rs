@@ -1,4 +1,4 @@
-use psi_vec::Vec2;
+use psi_svg::UnitSquarePoint;
 
 use crate::Scatter;
 
@@ -7,7 +7,7 @@ pub fn generate_svg(scatter: &Scatter) -> String {
     const HEIGHT: f64 = 500.0;
     const PADDING: f64 = 20.0;
 
-    let scale = |v: Vec2| -> (f64, f64) {
+    let scale = |v: UnitSquarePoint| -> (f64, f64) {
         let x = v.x * WIDTH;
         let y = (1.0 - v.y) * HEIGHT;
         (x, y)

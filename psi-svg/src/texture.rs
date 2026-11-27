@@ -2,7 +2,15 @@ use std::io::Cursor;
 use std::{borrow::Cow, fmt::Write as _};
 
 use base64::{Engine as _, engine::general_purpose::STANDARD};
+use euclid::Scale;
 use psi_topology::layout::Terrain;
+
+use crate::PixelScale;
+use crate::units::{Pixel, UnitSquare};
+
+struct TexturePixel;
+
+const TEXTURE_SCALE: Scale<f64, UnitSquare, TexturePixel> = Scale::new(700.0);
 
 #[derive(Default)]
 pub struct PsiSvgTextures<'a> {
@@ -14,10 +22,8 @@ pub struct PsiSvgTextures<'a> {
 }
 
 impl<'a> PsiSvgTextures<'a> {
-    const BASE_SCALE: f64 = 700.0;
-
-    pub(crate) fn write_defs(&self, out: &mut String, scale: f64) -> std::fmt::Result {
-        let scale = scale / Self::BASE_SCALE;
+    pub(crate) fn write_defs(&self, out: &mut String, scale: PixelScale) -> std::fmt::Result {
+        let scale = TEXTURE_SCALE.inverse() * scale;
         write_texture_pattern(
             out,
             "jungle",
@@ -77,10 +83,15 @@ pub(crate) fn fill(terrain: Terrain) -> &'static str {
     }
 }
 
-fn write_texture_pattern(out: &mut String, id: &str, png: &[u8], scale: f64) -> std::fmt::Result {
+fn write_texture_pattern(
+    out: &mut String,
+    id: &str,
+    png: &[u8],
+    scale: Scale<f64, TexturePixel, Pixel>,
+) -> std::fmt::Result {
     let (pixel_width, pixel_height) = png_dimensions(png);
-    let width = pixel_width as f64 * scale;
-    let height = pixel_height as f64 * scale;
+    let width = pixel_width as f64 * scale.get();
+    let height = pixel_height as f64 * scale.get();
     let data_uri = format!("data:image/png;base64,{}", STANDARD.encode(png));
     writeln!(
         out,

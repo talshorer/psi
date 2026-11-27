@@ -11,12 +11,13 @@
 
 use std::collections::{BTreeMap, HashMap};
 
+use euclid::{Angle, Length, Rotation2D, Scale, Vector2D};
 use psi_topology::layout::{Corner, Edge, LandNum, Layout, Terrain};
-use psi_vec::Vec2;
 
 use crate::{
     NormalizedVec2, PER_BOUNDARY, PolyLands, Segment,
     poly::{Poly, PolyBuilder},
+    units::{UnitSquare, UnitSquarePoint},
 };
 
 use key::{BoundaryKey, VertexKey};
@@ -93,17 +94,11 @@ impl VertexDataBuilder {
         }
     }
 
-    fn position(&self) -> Vec2 {
+    fn position(&self) -> UnitSquarePoint {
         const MIDPOINT: f64 = 0.5;
         match self.anchor {
-            VertexAnchor::None => Vec2 {
-                x: MIDPOINT,
-                y: MIDPOINT,
-            },
-            VertexAnchor::Ocean => Vec2 {
-                x: 0.0,
-                y: MIDPOINT,
-            },
+            VertexAnchor::None => UnitSquarePoint::new(MIDPOINT, MIDPOINT),
+            VertexAnchor::Ocean => UnitSquarePoint::new(0.0, MIDPOINT),
             VertexAnchor::Fixed(vec2) => vec2,
         }
     }
@@ -116,8 +111,12 @@ struct CellData {
 }
 
 impl CellData {
-    fn shoelace_area(&self, position: &HashMap<VertexKey, Vec2>) -> f64 {
-        self.poly_vertices
+    fn inverse_shoelace_area(
+        &self,
+        position: &HashMap<VertexKey, UnitSquarePoint>,
+    ) -> Length<f64, InverseUnitSquareArea> {
+        let shoelace = self
+            .poly_vertices
             .iter()
             .zip(self.poly_vertices.iter().cycle().skip(1))
             .map(|(v1, v2)| {
@@ -126,7 +125,8 @@ impl CellData {
                 (p1.x * p2.y) - (p1.y * p2.x)
             })
             .sum::<f64>()
-            / 2.0
+            / 2.0;
+        Length::new(1.0 / shoelace)
     }
 }
 
@@ -177,16 +177,23 @@ impl CellDataBuilder {
     }
 }
 
+struct InverseUnitSquareArea;
+pub(crate) struct UnitSquarePerIter;
+pub(crate) struct InverseUnitSquare;
+type UnitSquareForce = Vector2D<f64, UnitSquarePerIter>;
+pub(crate) type ForceByDistanceScale = Scale<f64, UnitSquare, UnitSquarePerIter>;
+pub(crate) type ForceByInverseDistanceScale = Scale<f64, InverseUnitSquare, UnitSquarePerIter>;
+
 #[derive(serde::Deserialize)]
 pub struct ForceOnlyConfig {
     #[serde(default = "ForceOnlyConfig::default_spring_force")]
-    pub(crate) spring_force: f64,
+    pub(crate) spring_force: ForceByDistanceScale,
     #[serde(default = "ForceOnlyConfig::default_pressure")]
-    pub(crate) pressure: f64,
+    pub(crate) pressure: ForceByInverseDistanceScale,
     #[serde(default = "ForceOnlyConfig::default_spring_force2")]
-    pub(crate) spring_force2: f64,
+    pub(crate) spring_force2: ForceByDistanceScale,
     #[serde(default = "ForceOnlyConfig::default_edge_push_force")]
-    pub(crate) edge_push_force: f64,
+    pub(crate) edge_push_force: ForceByDistanceScale,
     #[serde(default = "ForceOnlyConfig::default_spring_iters")]
     pub(crate) spring_iters: usize,
     #[serde(default = "ForceOnlyConfig::default_deflate_iters")]
@@ -194,20 +201,20 @@ pub struct ForceOnlyConfig {
 }
 
 impl ForceOnlyConfig {
-    const fn default_spring_force() -> f64 {
-        0.01
+    const fn default_spring_force() -> ForceByDistanceScale {
+        ForceByDistanceScale::new(0.01)
     }
 
-    const fn default_pressure() -> f64 {
-        0.0006
+    const fn default_pressure() -> ForceByInverseDistanceScale {
+        Scale::new(0.0006)
     }
 
-    const fn default_spring_force2() -> f64 {
-        0.001
+    const fn default_spring_force2() -> ForceByDistanceScale {
+        ForceByDistanceScale::new(0.001)
     }
 
-    const fn default_edge_push_force() -> f64 {
-        0.05
+    const fn default_edge_push_force() -> ForceByDistanceScale {
+        ForceByDistanceScale::new(0.05)
     }
 
     const fn default_spring_iters() -> usize {
@@ -234,39 +241,50 @@ impl Default for ForceOnlyConfig {
 
 struct Graph<'a> {
     layout: &'a Layout,
+    counterclockwise: Rotation2D<f64, UnitSquare, UnitSquare>,
     vertices: BTreeMap<VertexKey, VertexData>,
     cells: BTreeMap<LandNum, CellData>,
     config: &'a ForceOnlyConfig,
-    position: HashMap<VertexKey, Vec2>,
-    force: HashMap<VertexKey, Vec2>,
+    position: HashMap<VertexKey, UnitSquarePoint>,
+    force: HashMap<VertexKey, UnitSquareForce>,
 }
 
 impl<'a> Graph<'a> {
     fn build(layout: &'a Layout, config: &'a ForceOnlyConfig) -> Result<Self, EnclaveUnsupported> {
         // TODO dedup candidate with `for_seg_vor`
-        const RIGHT: NormalizedVec2 = NormalizedVec2::const_new(Vec2 { x: 1.0, y: 0.0 }).unwrap();
-        const LEFT: NormalizedVec2 = NormalizedVec2::const_new(Vec2 { x: -1.0, y: 0.0 }).unwrap();
-        const UP: NormalizedVec2 = NormalizedVec2::const_new(Vec2 { x: 0.0, y: 1.0 }).unwrap();
-        const DOWN: NormalizedVec2 = NormalizedVec2::const_new(Vec2 { x: 0.0, y: -1.0 }).unwrap();
+        const RIGHT: NormalizedVec2 = NormalizedVec2::const_new(1.0, 0.0).unwrap();
+        const LEFT: NormalizedVec2 = NormalizedVec2::const_new(-1.0, 0.0).unwrap();
+        const UP: NormalizedVec2 = NormalizedVec2::const_new(0.0, 1.0).unwrap();
+        const DOWN: NormalizedVec2 = NormalizedVec2::const_new(0.0, -1.0).unwrap();
 
         GraphBuilder::new(layout, config)
-            .corner(Corner::Clock1, Vec2 { x: 0.0, y: 1.0 }, None, Some(RIGHT))
+            .corner(
+                Corner::Clock1,
+                UnitSquarePoint::new(0.0, 1.0),
+                None,
+                Some(RIGHT),
+            )
             .corner(
                 Corner::Clock5,
-                Vec2 { x: 1.0, y: 1.0 },
+                UnitSquarePoint::new(1.0, 1.0),
                 Some(LEFT),
                 Some(DOWN),
             )
             .corner(
                 Corner::Clock7,
-                Vec2 { x: 1.0, y: 0.0 },
+                UnitSquarePoint::new(1.0, 0.0),
                 Some(UP),
                 Some(LEFT),
             )
-            .corner(Corner::Clock11, Vec2 { x: 0.0, y: 0.0 }, Some(RIGHT), None)
-            .edge(Edge::Clock3, Vec2 { x: 0.0, y: 1.0 }, RIGHT)
-            .edge(Edge::Clock6, Vec2 { x: 1.0, y: 1.0 }, DOWN)
-            .edge(Edge::Clock9, Vec2 { x: 1.0, y: 0.0 }, LEFT)
+            .corner(
+                Corner::Clock11,
+                UnitSquarePoint::new(0.0, 0.0),
+                Some(RIGHT),
+                None,
+            )
+            .edge(Edge::Clock3, UnitSquarePoint::new(0.0, 1.0), RIGHT)
+            .edge(Edge::Clock6, UnitSquarePoint::new(1.0, 1.0), DOWN)
+            .edge(Edge::Clock9, UnitSquarePoint::new(1.0, 0.0), LEFT)
             .finalize()
     }
 
@@ -275,10 +293,10 @@ impl<'a> Graph<'a> {
             if matches!(v1.anchor, VertexAnchor::Fixed(_)) {
                 continue;
             }
-            let mut force = Vec2::default();
+            let mut force = UnitSquareForce::zero();
             for v2 in &v1.links {
                 let diff = self.position[k1] - self.position[v2];
-                force += -self.config.spring_force * diff;
+                force += -diff * self.config.spring_force;
             }
             *self.force.get_mut(k1).unwrap() = force;
         }
@@ -289,7 +307,7 @@ impl<'a> Graph<'a> {
         for (c1, d1) in &self.cells {
             let ia1 = *inv_areas
                 .entry(*c1)
-                .or_insert_with(|| 1.0 / d1.shoelace_area(&self.position));
+                .or_insert_with(|| d1.inverse_shoelace_area(&self.position));
             for (c2, (v1, v2)) in d1
                 .links
                 .iter()
@@ -298,13 +316,17 @@ impl<'a> Graph<'a> {
                 let d2 = &self.cells[&c2];
                 let ia2 = *inv_areas
                     .entry(c2)
-                    .or_insert_with(|| 1.0 / d2.shoelace_area(&self.position));
+                    .or_insert_with(|| d2.inverse_shoelace_area(&self.position));
                 // by `orient_cells`, we know `v1` -> `v2` goes counterclockwise.
                 let diff = self.position[v2] - self.position[v1];
                 // clock12 -> clock9 @@ (0,  1) -> (-1, 0)
                 // clock9  -> clock6 @@ (-1, 0) -> (0, -1)
-                let inwards = diff.quarter_counterclockwise();
-                let force = (ia2 - ia1) * self.config.pressure / 2.0 * inwards;
+                let inwards = self.counterclockwise.transform_vector(diff);
+                let ia_diff = ia2 - ia1;
+                let inwards_surface =
+                // `UnitSquare` * `InverseUnitSquareArea` = `InverseUnitSquare`
+                    inwards * Scale::<f64, UnitSquare, InverseUnitSquare>::new(ia_diff.get());
+                let force = inwards_surface * self.config.pressure / 2.0;
                 *self.force.get_mut(v1).unwrap() += force;
                 *self.force.get_mut(v2).unwrap() += force;
             }
@@ -314,49 +336,42 @@ impl<'a> Graph<'a> {
                 .zip(d1.poly_vertices.iter().cycle().skip(1))
             {
                 let diff = self.position[v1] - self.position[v2];
-                let force = -self.config.spring_force2 * diff;
+                let force = -diff * self.config.spring_force2;
                 *self.force.get_mut(v1).unwrap() += force;
                 *self.force.get_mut(v2).unwrap() -= force;
             }
         }
         for v in self.vertices.keys() {
             let pos = self.position[v];
-            let mut force = Vec2::default();
+            let mut force = UnitSquareForce::zero();
             if pos.x < 0.1 {
-                force += Vec2 {
-                    x: (0.1 - pos.x) * self.config.edge_push_force,
-                    y: 0.0,
-                }
+                force +=
+                    UnitSquareForce::new((0.1 - pos.x) * self.config.edge_push_force.get(), 0.0)
             } else if pos.x > 0.9 {
-                force += Vec2 {
-                    x: (0.9 - pos.x) * self.config.edge_push_force,
-                    y: 0.0,
-                }
+                force +=
+                    UnitSquareForce::new((0.9 - pos.x) * self.config.edge_push_force.get(), 0.0)
             }
             if pos.y < 0.1 {
-                force += Vec2 {
-                    x: 0.0,
-                    y: (0.1 - pos.y) * self.config.edge_push_force,
-                }
+                force +=
+                    UnitSquareForce::new(0.0, (0.1 - pos.y) * self.config.edge_push_force.get())
             } else if pos.y > 0.9 {
-                force += Vec2 {
-                    x: 0.0,
-                    y: (0.9 - pos.y) * self.config.edge_push_force,
-                }
+                force +=
+                    UnitSquareForce::new(0.0, (0.9 - pos.y) * self.config.edge_push_force.get())
             }
             *self.force.get_mut(v).unwrap() += force;
         }
     }
 
     fn apply_forces(&mut self) {
+        const FORCE_SCALE: Scale<f64, UnitSquarePerIter, UnitSquare> = Scale::new(1.0);
         for (key, force) in self.force.iter_mut() {
             let anchor = self.vertices[key].anchor;
             *self.position.get_mut(key).unwrap() += match anchor {
                 VertexAnchor::None => *force,
-                VertexAnchor::Ocean => Vec2 { x: 0.0, y: force.y },
-                VertexAnchor::Fixed(_) => Vec2::default(),
-            };
-            *force = Vec2::default();
+                VertexAnchor::Ocean => UnitSquareForce::new(0.0, force.y),
+                VertexAnchor::Fixed(_) => UnitSquareForce::zero(),
+            } * FORCE_SCALE;
+            *force = UnitSquareForce::zero();
         }
     }
 
@@ -367,7 +382,7 @@ impl<'a> Graph<'a> {
 
         for data in self.cells.values_mut() {
             // `shoelace_area` is negative for a clockwise polygon.
-            if data.shoelace_area(&self.position) < 0.0 {
+            if data.inverse_shoelace_area(&self.position).get() < 0.0 {
                 data.poly_vertices.reverse();
             }
             for (v1, v2) in data.links.values_mut() {
@@ -443,7 +458,7 @@ pub struct PhysicsSimulationBreakage;
 enum VertexAnchor {
     None,
     Ocean,
-    Fixed(Vec2),
+    Fixed(UnitSquarePoint),
 }
 
 // TODO dedup as much as possible with `for_seg_vor`
@@ -492,7 +507,7 @@ impl<'a> GraphBuilder<'a> {
     fn corner(
         &mut self,
         corner: Corner,
-        point: Vec2,
+        point: UnitSquarePoint,
         backwards: Option<NormalizedVec2>,
         forwards: Option<NormalizedVec2>,
     ) -> &mut Self {
@@ -517,7 +532,7 @@ impl<'a> GraphBuilder<'a> {
         self
     }
 
-    fn edge(&mut self, edge: Edge, offset: Vec2, advance: NormalizedVec2) -> &mut Self {
+    fn edge(&mut self, edge: Edge, offset: UnitSquarePoint, advance: NormalizedVec2) -> &mut Self {
         let ledge = &self.layout.edges[edge];
         let mut prev_key = VertexKey::new([
             CellKey::Land(ledge.lands[0]),
@@ -538,7 +553,7 @@ impl<'a> GraphBuilder<'a> {
                 .push(key);
             self.vertex(
                 key,
-                VertexAnchor::Fixed(boundary.0 as f64 * PER_BOUNDARY * *advance + offset),
+                VertexAnchor::Fixed(offset + *advance * PER_BOUNDARY * boundary.0 as f64),
             );
             self.link(prev_key, key, CellKey::Edge(edge), CellKey::Land(land1));
             prev_key = key;
@@ -677,6 +692,7 @@ impl<'a> GraphBuilder<'a> {
         }
         Ok(Graph {
             layout: self.layout,
+            counterclockwise: Rotation2D::new(Angle::frac_pi_2()),
             vertices: self
                 .vertices
                 .iter_mut()
@@ -692,7 +708,7 @@ impl<'a> GraphBuilder<'a> {
             force: self
                 .vertices
                 .keys()
-                .map(|k| (*k, Vec2::default()))
+                .map(|k| (*k, UnitSquareForce::zero()))
                 .collect(),
         })
     }

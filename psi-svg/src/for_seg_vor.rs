@@ -12,15 +12,17 @@
 
 use std::collections::{BTreeMap, BTreeSet, HashMap, hash_map::Entry};
 
+use euclid::{Point2D, Scale};
 use psi_topology::layout::{Corner, Edge, LandNum, Layout, LayoutEdge, Terrain};
-use psi_vec::Vec2;
 
 use crate::{
     NormalizedVec2, PER_BOUNDARY, PolyLands, Segment,
     poly::{Poly, PolyBuilder},
+    units::{UnitSquare, UnitSquarePoint},
 };
 
-const RESOLUTION: f64 = 1000.0;
+struct Voronoi;
+const VORONOI_RESOLUTION: Scale<f64, UnitSquare, Voronoi> = Scale::new(1000.0);
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 struct LandData {
@@ -42,37 +44,56 @@ impl<'a> Graph<'a> {
     }
 
     fn build(layout: &'a Layout) -> Self {
-        const RIGHT: NormalizedVec2 = NormalizedVec2::const_new(Vec2 { x: 1.0, y: 0.0 }).unwrap();
-        const LEFT: NormalizedVec2 = NormalizedVec2::const_new(Vec2 { x: -1.0, y: 0.0 }).unwrap();
-        const UP: NormalizedVec2 = NormalizedVec2::const_new(Vec2 { x: 0.0, y: 1.0 }).unwrap();
-        const DOWN: NormalizedVec2 = NormalizedVec2::const_new(Vec2 { x: 0.0, y: -1.0 }).unwrap();
+        const RIGHT: NormalizedVec2 = NormalizedVec2::const_new(1.0, 0.0).unwrap();
+        const LEFT: NormalizedVec2 = NormalizedVec2::const_new(-1.0, 0.0).unwrap();
+        const UP: NormalizedVec2 = NormalizedVec2::const_new(0.0, 1.0).unwrap();
+        const DOWN: NormalizedVec2 = NormalizedVec2::const_new(0.0, -1.0).unwrap();
 
         GraphBuilder::new(layout)
-            .corner(Corner::Clock1, Vec2 { x: 0.0, y: 1.0 }, None, Some(RIGHT))
+            .corner(
+                Corner::Clock1,
+                UnitSquarePoint::new(0.0, 1.0),
+                None,
+                Some(RIGHT),
+            )
             .corner(
                 Corner::Clock5,
-                Vec2 { x: 1.0, y: 1.0 },
+                UnitSquarePoint::new(1.0, 1.0),
                 Some(LEFT),
                 Some(DOWN),
             )
             .corner(
                 Corner::Clock7,
-                Vec2 { x: 1.0, y: 0.0 },
+                UnitSquarePoint::new(1.0, 0.0),
                 Some(UP),
                 Some(LEFT),
             )
-            .corner(Corner::Clock11, Vec2 { x: 0.0, y: 0.0 }, Some(RIGHT), None)
-            .edge(&layout.edges[Edge::Clock3], Vec2 { x: 0.0, y: 1.0 }, RIGHT)
-            .edge(&layout.edges[Edge::Clock6], Vec2 { x: 1.0, y: 1.0 }, DOWN)
-            .edge(&layout.edges[Edge::Clock9], Vec2 { x: 1.0, y: 0.0 }, LEFT)
-            .finalize(Vec2 {
-                x: -PER_BOUNDARY,
-                y: 1.0 / 2.0,
-            })
+            .corner(
+                Corner::Clock11,
+                UnitSquarePoint::new(0.0, 0.0),
+                Some(RIGHT),
+                None,
+            )
+            .edge(
+                &layout.edges[Edge::Clock3],
+                UnitSquarePoint::new(0.0, 1.0),
+                RIGHT,
+            )
+            .edge(
+                &layout.edges[Edge::Clock6],
+                UnitSquarePoint::new(1.0, 1.0),
+                DOWN,
+            )
+            .edge(
+                &layout.edges[Edge::Clock9],
+                UnitSquarePoint::new(1.0, 0.0),
+                LEFT,
+            )
+            .finalize(UnitSquarePoint::new(-PER_BOUNDARY.get(), 0.5))
     }
 
-    fn bvg_point(v: Vec2) -> boostvoronoi::geometry::Point<i64> {
-        let v = RESOLUTION * v;
+    fn bvg_point(v: UnitSquarePoint) -> boostvoronoi::geometry::Point<i64> {
+        let v = v * VORONOI_RESOLUTION;
         boostvoronoi::geometry::Point::new(v.x as i64, v.y as i64)
     }
 
@@ -95,10 +116,7 @@ impl<'a> Graph<'a> {
                         node.data.user_data.land,
                         (
                             node.data.user_data,
-                            Vec2 {
-                                x: node.x().into(),
-                                y: node.y().into(),
-                            },
+                            UnitSquarePoint::new(node.x().into(), node.y().into()),
                         ),
                     );
                 });
@@ -141,7 +159,7 @@ impl<'a> Graph<'a> {
                         {
                             continue;
                         }
-                        let mid = 0.5 * (*point + *adj);
+                        let mid = *point + (*adj - *point) * 0.5;
                         lines.push(boostvoronoi::geometry::Line::new(
                             Self::bvg_point(*point),
                             Self::bvg_point(mid),
@@ -152,11 +170,11 @@ impl<'a> Graph<'a> {
 
                 const LO: f64 = -1.0;
                 const HI: f64 = 2.0;
-                const INFINITY_POINTS: [Vec2; 4] = [
-                    Vec2 { x: LO, y: LO },
-                    Vec2 { x: LO, y: HI },
-                    Vec2 { x: HI, y: HI },
-                    Vec2 { x: HI, y: LO },
+                const INFINITY_POINTS: [UnitSquarePoint; 4] = [
+                    UnitSquarePoint::new(LO, LO),
+                    UnitSquarePoint::new(LO, HI),
+                    UnitSquarePoint::new(HI, HI),
+                    UnitSquarePoint::new(HI, LO),
                 ];
                 for (c1, c2) in INFINITY_POINTS
                     .iter()
@@ -193,7 +211,7 @@ impl<'a> GraphBuilder<'a> {
         }
     }
 
-    fn land(&mut self, land: LandNum, anchor: Option<(Vec2, Segment)>) {
+    fn land(&mut self, land: LandNum, anchor: Option<(UnitSquarePoint, Segment)>) {
         assert!(self.open.remove(&land));
         let (point, anchor) = anchor.unzip();
         self.indices.insert(
@@ -215,7 +233,7 @@ impl<'a> GraphBuilder<'a> {
     fn corner(
         &mut self,
         corner: Corner,
-        point: Vec2,
+        point: UnitSquarePoint,
         backwards: Option<NormalizedVec2>,
         forwards: Option<NormalizedVec2>,
     ) -> &mut Self {
@@ -224,41 +242,50 @@ impl<'a> GraphBuilder<'a> {
         assert_eq!(backwards.is_none(), counter_clockwise.is_none());
         assert_eq!(forwards.is_none(), clockwise.is_none());
         let anchor = Segment(
-            counter_clockwise
-                .zip(backwards)
-                .map_or_default(|(edge, advance)| {
-                    (1.0 - self.layout.edges[edge].boundaries.last().unwrap().0 as f64
-                        * PER_BOUNDARY)
-                        * *advance
-                })
-                + point,
-            clockwise.zip(forwards).map_or_default(|(edge, advance)| {
-                self.layout.edges[edge].boundaries.first().unwrap().0 as f64
-                    * PER_BOUNDARY
-                    * *advance
-            }) + point,
+            point
+                + counter_clockwise
+                    .zip(backwards)
+                    .map_or_default(|(edge, advance)| {
+                        *advance
+                            * (Scale::new(1.0)
+                                - PER_BOUNDARY
+                                    * Scale::new(
+                                        self.layout.edges[edge].boundaries.last().unwrap().0 as f64,
+                                    ))
+                    }),
+            point
+                + clockwise.zip(forwards).map_or_default(|(edge, advance)| {
+                    *advance
+                        * PER_BOUNDARY
+                        * (self.layout.edges[edge].boundaries.first().unwrap().0 as f64)
+                }),
         );
         self.land(self.layout.corner(corner), Some((point, anchor)));
         self
     }
 
-    fn edge(&mut self, ledge: &LayoutEdge, offset: Vec2, advance: NormalizedVec2) -> &mut Self {
+    fn edge(
+        &mut self,
+        ledge: &LayoutEdge,
+        offset: UnitSquarePoint,
+        advance: NormalizedVec2,
+    ) -> &mut Self {
         for (idx, land) in ledge.lands[1..ledge.lands.len() - 1]
             .iter()
             .copied()
             .enumerate()
         {
             let anchor = Segment(
-                ledge.boundaries[idx].0 as f64 * PER_BOUNDARY * *advance + offset,
-                ledge.boundaries[idx + 1].0 as f64 * PER_BOUNDARY * *advance + offset,
+                offset + *advance * PER_BOUNDARY * ledge.boundaries[idx].0 as f64,
+                offset + *advance * PER_BOUNDARY * ledge.boundaries[idx + 1].0 as f64,
             );
-            let point = 0.5 * (anchor.0 + anchor.1);
+            let point = anchor.0 + (anchor.1 - anchor.0) * 0.5;
             self.land(land, Some((point, anchor)));
         }
         self
     }
 
-    fn finalize(&mut self, ocean: Vec2) -> Graph<'a> {
+    fn finalize(&mut self, ocean: UnitSquarePoint) -> Graph<'a> {
         self.land(LandNum(0), Some((ocean, Segment(ocean, ocean))));
 
         for land in self.open.clone() {
@@ -339,14 +366,8 @@ impl<'a> VoronoiPost<'a> {
         Some((
             SegmentKey(v0.u32(), v1.u32()),
             Segment(
-                Vec2 {
-                    x: p0.x() / RESOLUTION,
-                    y: p0.y() / RESOLUTION,
-                },
-                Vec2 {
-                    x: p1.x() / RESOLUTION,
-                    y: p1.y() / RESOLUTION,
-                },
+                Point2D::new(p0.x(), p0.y()) / VORONOI_RESOLUTION,
+                Point2D::new(p1.x(), p1.y()) / VORONOI_RESOLUTION,
             ),
         ))
     }

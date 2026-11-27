@@ -1,8 +1,7 @@
 use std::rc::Rc;
 
-use psi_svg::Segment;
+use psi_svg::{Segment, UnitSquarePoint};
 use psi_topology::layout::{Boundary, Layout, LayoutData, ValidatedLayoutData};
-use psi_vec::Vec2;
 use rand::{Rng as _, SeedableRng as _, seq::SliceRandom};
 use rand_chacha::ChaCha20Rng;
 
@@ -58,7 +57,7 @@ enum ScatterEdge {
 
 #[derive(Default)]
 struct Scatter {
-    lands: Vec<Vec2>,
+    lands: Vec<UnitSquarePoint>,
     links: Vec<(usize, usize)>,
     legal_links: Vec<WeightedOption<(usize, usize)>>,
 }
@@ -70,13 +69,13 @@ impl Scatter {
         (Self::WEIGHT_RESOLUTION / (magnitude * magnitude)) as u64
     }
 
-    fn push(&mut self, land: Vec2) -> usize {
+    fn push(&mut self, land: UnitSquarePoint) -> usize {
         let idx = self.lands.len();
         self.lands.push(land);
         for i in 0..idx {
             self.legal_links.push(WeightedOption {
                 value: (i, idx),
-                weight: Self::link_weight((land - self.lands[i]).magnitude()),
+                weight: Self::link_weight((land - self.lands[i]).length()),
             });
         }
         idx
@@ -88,7 +87,12 @@ impl Scatter {
         }
     }
 
-    fn push_edge(&mut self, edge: ScatterEdge, boundaries: &[usize], pos: fn(f64) -> Vec2) {
+    fn push_edge(
+        &mut self,
+        edge: ScatterEdge,
+        boundaries: &[usize],
+        pos: fn(f64) -> UnitSquarePoint,
+    ) {
         let last = self.lands.len().checked_sub(1);
         let lands = matches!(edge, ScatterEdge::First)
             .then_some(0.0)
@@ -129,10 +133,7 @@ impl Scatter {
     }
 
     fn push_random(&mut self, rng: &mut Rng) {
-        self.push(Vec2 {
-            x: rng.next_f64(),
-            y: rng.next_f64(),
-        });
+        self.push(UnitSquarePoint::new(rng.next_f64(), rng.next_f64()));
     }
 
     fn link_random(&mut self, rng: &mut Rng, max_dist: f64) -> bool {
@@ -286,7 +287,7 @@ impl LayoutGenerator {
         envelope_counts: &[usize],
         edge: usize,
         last: bool,
-        pos: fn(f64) -> Vec2,
+        pos: fn(f64) -> UnitSquarePoint,
     ) {
         let count = envelope_counts[edge];
         self.boundaries[edge] = self.boundaries(count);
@@ -313,22 +314,18 @@ impl LayoutGenerator {
     pub fn generate_layout(&mut self) -> Rc<Layout> {
         let mut scatter = Scatter::default();
         let coastals = self.config.balance.coastal_count(&mut self.rng);
-        scatter.push_edge(ScatterEdge::First, &self.boundaries(coastals), |v| Vec2 {
-            x: 0.0,
-            y: v,
+        scatter.push_edge(ScatterEdge::First, &self.boundaries(coastals), |v| {
+            UnitSquarePoint::new(0.0, v)
         });
         let envelope_counts = self.config.balance.envelope_counts(&mut self.rng);
-        self.push_edge(&mut scatter, &envelope_counts, 0, false, |v| Vec2 {
-            x: v,
-            y: 1.0,
+        self.push_edge(&mut scatter, &envelope_counts, 0, false, |v| {
+            UnitSquarePoint::new(v, 1.0)
         });
-        self.push_edge(&mut scatter, &envelope_counts, 1, false, |v| Vec2 {
-            x: 1.0,
-            y: 1.0 - v,
+        self.push_edge(&mut scatter, &envelope_counts, 1, false, |v| {
+            UnitSquarePoint::new(1.0, 1.0 - v)
         });
-        self.push_edge(&mut scatter, &envelope_counts, 2, true, |v| Vec2 {
-            x: 1.0 - v,
-            y: 0.0,
+        self.push_edge(&mut scatter, &envelope_counts, 2, true, |v| {
+            UnitSquarePoint::new(1.0 - v, 0.0)
         });
         self.envelope.push(1);
         let nr_lands = self
