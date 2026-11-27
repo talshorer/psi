@@ -1,4 +1,4 @@
-use std::ops::{Add, AddAssign, Deref, Mul, Neg, Sub, SubAssign};
+use std::ops::{Add, AddAssign, Mul, Neg, Sub, SubAssign};
 
 #[derive(Debug, Clone, Copy, Default, PartialEq)]
 pub struct Vec2 {
@@ -86,33 +86,5 @@ impl Neg for Vec2 {
             x: -self.x,
             y: -self.y,
         }
-    }
-}
-
-#[derive(Debug, Clone, Copy)]
-pub struct NormalizedVec2(Vec2);
-
-impl NormalizedVec2 {
-    pub const fn const_new(v: Vec2) -> Option<Self> {
-        if (v.dot(v)) == 1.0 {
-            Some(Self(v))
-        } else {
-            None
-        }
-    }
-}
-
-impl From<Vec2> for NormalizedVec2 {
-    fn from(v: Vec2) -> Self {
-        let scale = v.magnitude();
-        Self((1.0 / scale) * v)
-    }
-}
-
-impl Deref for NormalizedVec2 {
-    type Target = Vec2;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
     }
 }

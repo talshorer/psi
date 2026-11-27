@@ -12,10 +12,10 @@
 use std::collections::{BTreeMap, HashMap};
 
 use psi_topology::layout::{Corner, Edge, LandNum, Layout, Terrain};
-use psi_vec::{NormalizedVec2, Vec2};
+use psi_vec::Vec2;
 
 use crate::{
-    PER_BOUNDARY, PolyLands, Segment,
+    NormalizedVec2, PER_BOUNDARY, PolyLands, Segment,
     poly::{Poly, PolyBuilder},
 };
 

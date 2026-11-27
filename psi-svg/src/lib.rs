@@ -1,4 +1,4 @@
-use std::{collections::BTreeMap, fmt::Write as _};
+use std::{collections::BTreeMap, fmt::Write as _, ops::Deref};
 
 use psi_topology::layout::{Boundary, LandNum, Layout, Terrain};
 use psi_vec::Vec2;
@@ -16,6 +16,34 @@ const PER_BOUNDARY: f64 = const {
     assert!(Boundary::MIN == 1);
     1.0 / (Boundary::MAX + 1) as f64
 };
+
+#[derive(Debug, Clone, Copy)]
+struct NormalizedVec2(Vec2);
+
+impl NormalizedVec2 {
+    const fn const_new(v: Vec2) -> Option<Self> {
+        if (v.dot(v)) == 1.0 {
+            Some(Self(v))
+        } else {
+            None
+        }
+    }
+}
+
+impl From<Vec2> for NormalizedVec2 {
+    fn from(v: Vec2) -> Self {
+        let scale = v.magnitude();
+        Self((1.0 / scale) * v)
+    }
+}
+
+impl Deref for NormalizedVec2 {
+    type Target = Vec2;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 struct Tilt {
     sin: f64,
