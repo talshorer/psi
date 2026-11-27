@@ -23,7 +23,9 @@ use crate::{
 };
 
 struct Voronoi;
-const VORONOI_RESOLUTION: Scale<f64, UnitSquare, Voronoi> = Scale::new(1000.0);
+const VORONOI_RESOLUTION_RAW: i64 = 1000;
+const VORONOI_RESOLUTION: Scale<f64, UnitSquare, Voronoi> =
+    Scale::new(VORONOI_RESOLUTION_RAW as f64);
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 struct LandData {
@@ -141,21 +143,21 @@ impl<'a> Graph<'a> {
                     }
                 }
 
-                const LO: f64 = -1.0;
-                const HI: f64 = 2.0;
-                const INFINITY_POINTS: [UnitSquarePoint; 4] = [
-                    UnitSquarePoint::new(LO, LO),
-                    UnitSquarePoint::new(LO, HI),
-                    UnitSquarePoint::new(HI, HI),
-                    UnitSquarePoint::new(HI, LO),
+                const LO: i64 = -VORONOI_RESOLUTION_RAW;
+                const HI: i64 = VORONOI_RESOLUTION_RAW + 1;
+                const INFINITY_POINTS: [Point2D<i64, Voronoi>; 4] = [
+                    Point2D::new(LO, LO),
+                    Point2D::new(LO, HI),
+                    Point2D::new(HI, HI),
+                    Point2D::new(HI, LO),
                 ];
                 for (c1, c2) in INFINITY_POINTS
                     .iter()
                     .zip(INFINITY_POINTS.iter().cycle().skip(1))
                 {
                     lines.push(boostvoronoi::geometry::Line::new(
-                        Self::bvg_point(*c1),
-                        Self::bvg_point(*c2),
+                        boostvoronoi::geometry::Point::new(c1.x, c1.y),
+                        boostvoronoi::geometry::Point::new(c2.x, c2.y),
                     ));
                 }
 
