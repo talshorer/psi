@@ -15,7 +15,7 @@ use psi_topology::layout::{Corner, Edge, LandNum, Layout, Terrain};
 use psi_vec::{NormalizedVec2, Vec2};
 
 use crate::{
-    BoundingBox, PolyLands, Segment,
+    PER_BOUNDARY, PolyLands, Segment,
     poly::{Poly, PolyBuilder},
 };
 
@@ -93,16 +93,16 @@ impl VertexDataBuilder {
         }
     }
 
-    fn position(&self, bb: &BoundingBox) -> Vec2 {
-        let midpoint = bb.side / 2.0;
+    fn position(&self) -> Vec2 {
+        const MIDPOINT: f64 = 0.5;
         match self.anchor {
             VertexAnchor::None => Vec2 {
-                x: midpoint,
-                y: midpoint,
+                x: MIDPOINT,
+                y: MIDPOINT,
             },
             VertexAnchor::Ocean => Vec2 {
                 x: 0.0,
-                y: midpoint,
+                y: MIDPOINT,
             },
             VertexAnchor::Fixed(vec2) => vec2,
         }
@@ -199,7 +199,7 @@ impl ForceOnlyConfig {
     }
 
     const fn default_pressure() -> f64 {
-        300.0
+        0.0006
     }
 
     const fn default_spring_force2() -> f64 {
@@ -234,7 +234,6 @@ impl Default for ForceOnlyConfig {
 
 struct Graph<'a> {
     layout: &'a Layout,
-    bb: &'a BoundingBox,
     vertices: BTreeMap<VertexKey, VertexData>,
     cells: BTreeMap<LandNum, CellData>,
     config: &'a ForceOnlyConfig,
@@ -243,50 +242,31 @@ struct Graph<'a> {
 }
 
 impl<'a> Graph<'a> {
-    fn build(
-        layout: &'a Layout,
-        bb: &'a BoundingBox,
-        config: &'a ForceOnlyConfig,
-    ) -> Result<Self, EnclaveUnsupported> {
+    fn build(layout: &'a Layout, config: &'a ForceOnlyConfig) -> Result<Self, EnclaveUnsupported> {
         // TODO dedup candidate with `for_seg_vor`
         const RIGHT: NormalizedVec2 = NormalizedVec2::const_new(Vec2 { x: 1.0, y: 0.0 }).unwrap();
         const LEFT: NormalizedVec2 = NormalizedVec2::const_new(Vec2 { x: -1.0, y: 0.0 }).unwrap();
         const UP: NormalizedVec2 = NormalizedVec2::const_new(Vec2 { x: 0.0, y: 1.0 }).unwrap();
         const DOWN: NormalizedVec2 = NormalizedVec2::const_new(Vec2 { x: 0.0, y: -1.0 }).unwrap();
 
-        GraphBuilder::new(layout, bb, config)
-            .corner(
-                Corner::Clock1,
-                Vec2 { x: 0.0, y: bb.side },
-                None,
-                Some(RIGHT),
-            )
+        GraphBuilder::new(layout, config)
+            .corner(Corner::Clock1, Vec2 { x: 0.0, y: 1.0 }, None, Some(RIGHT))
             .corner(
                 Corner::Clock5,
-                Vec2 {
-                    x: bb.side,
-                    y: bb.side,
-                },
+                Vec2 { x: 1.0, y: 1.0 },
                 Some(LEFT),
                 Some(DOWN),
             )
             .corner(
                 Corner::Clock7,
-                Vec2 { x: bb.side, y: 0.0 },
+                Vec2 { x: 1.0, y: 0.0 },
                 Some(UP),
                 Some(LEFT),
             )
             .corner(Corner::Clock11, Vec2 { x: 0.0, y: 0.0 }, Some(RIGHT), None)
-            .edge(Edge::Clock3, Vec2 { x: 0.0, y: bb.side }, RIGHT)
-            .edge(
-                Edge::Clock6,
-                Vec2 {
-                    x: bb.side,
-                    y: bb.side,
-                },
-                DOWN,
-            )
-            .edge(Edge::Clock9, Vec2 { x: bb.side, y: 0.0 }, LEFT)
+            .edge(Edge::Clock3, Vec2 { x: 0.0, y: 1.0 }, RIGHT)
+            .edge(Edge::Clock6, Vec2 { x: 1.0, y: 1.0 }, DOWN)
+            .edge(Edge::Clock9, Vec2 { x: 1.0, y: 0.0 }, LEFT)
             .finalize()
     }
 
@@ -342,26 +322,26 @@ impl<'a> Graph<'a> {
         for v in self.vertices.keys() {
             let pos = self.position[v];
             let mut force = Vec2::default();
-            if pos.x < self.bb.side * 0.1 {
+            if pos.x < 0.1 {
                 force += Vec2 {
-                    x: (self.bb.side * 0.1 - pos.x) * self.config.edge_push_force,
+                    x: (0.1 - pos.x) * self.config.edge_push_force,
                     y: 0.0,
                 }
-            } else if pos.x > self.bb.side * 0.9 {
+            } else if pos.x > 0.9 {
                 force += Vec2 {
-                    x: (self.bb.side * 0.9 - pos.x) * self.config.edge_push_force,
+                    x: (0.9 - pos.x) * self.config.edge_push_force,
                     y: 0.0,
                 }
             }
-            if pos.y < self.bb.side * 0.1 {
+            if pos.y < 0.1 {
                 force += Vec2 {
                     x: 0.0,
-                    y: (self.bb.side * 0.1 - pos.y) * self.config.edge_push_force,
+                    y: (0.1 - pos.y) * self.config.edge_push_force,
                 }
-            } else if pos.y > self.bb.side * 0.9 {
+            } else if pos.y > 0.9 {
                 force += Vec2 {
                     x: 0.0,
-                    y: (self.bb.side * 0.9 - pos.y) * self.config.edge_push_force,
+                    y: (0.9 - pos.y) * self.config.edge_push_force,
                 }
             }
             *self.force.get_mut(v).unwrap() += force;
@@ -419,7 +399,7 @@ impl<'a> Graph<'a> {
         let mut polys = BTreeMap::new();
         for (v, p) in &self.position {
             assert!(
-                p.x >= 0.0 && p.x <= self.bb.side && p.y >= 0.0 && p.y <= self.bb.side,
+                p.x >= 0.0 && p.x <= 1.0 && p.y >= 0.0 && p.y <= 1.0,
                 "{v:?} {p:?}",
             )
         }
@@ -445,7 +425,6 @@ impl<'a> Graph<'a> {
 
 struct GraphBuilder<'a> {
     layout: &'a Layout,
-    bb: &'a BoundingBox,
     config: &'a ForceOnlyConfig,
     vertices: BTreeMap<VertexKey, VertexDataBuilder>,
     cell_edges: BTreeMap<CellKey, CellDataBuilder>,
@@ -469,10 +448,9 @@ enum VertexAnchor {
 
 // TODO dedup as much as possible with `for_seg_vor`
 impl<'a> GraphBuilder<'a> {
-    fn new(layout: &'a Layout, bb: &'a BoundingBox, config: &'a ForceOnlyConfig) -> Self {
+    fn new(layout: &'a Layout, config: &'a ForceOnlyConfig) -> Self {
         Self {
             layout,
-            bb,
             config,
             vertices: Default::default(),
             boundaries: Default::default(),
@@ -560,7 +538,7 @@ impl<'a> GraphBuilder<'a> {
                 .push(key);
             self.vertex(
                 key,
-                VertexAnchor::Fixed(boundary.0 as f64 * self.bb.per_boundary * *advance + offset),
+                VertexAnchor::Fixed(boundary.0 as f64 * PER_BOUNDARY * *advance + offset),
             );
             self.link(prev_key, key, CellKey::Edge(edge), CellKey::Land(land1));
             prev_key = key;
@@ -699,7 +677,6 @@ impl<'a> GraphBuilder<'a> {
         }
         Ok(Graph {
             layout: self.layout,
-            bb: self.bb,
             vertices: self
                 .vertices
                 .iter_mut()
@@ -710,7 +687,7 @@ impl<'a> GraphBuilder<'a> {
             position: self
                 .vertices
                 .iter()
-                .map(|(k, v)| (*k, v.position(self.bb)))
+                .map(|(k, v)| (*k, v.position()))
                 .collect(),
             force: self
                 .vertices
@@ -731,10 +708,9 @@ pub enum ForceOnlyError {
 
 pub(crate) fn force_only(
     layout: &Layout,
-    bb: &BoundingBox,
     config: &ForceOnlyConfig,
 ) -> Result<PolyLands, ForceOnlyError> {
-    let mut graph = Graph::build(layout, bb, config)?;
+    let mut graph = Graph::build(layout, config)?;
     graph.evolve();
     Ok(PolyLands(graph.polys()?))
 }

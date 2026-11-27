@@ -14,7 +14,10 @@ pub struct PsiSvgTextures<'a> {
 }
 
 impl<'a> PsiSvgTextures<'a> {
+    const BASE_SCALE: f64 = 700.0;
+
     pub(crate) fn write_defs(&self, out: &mut String, scale: f64) -> std::fmt::Result {
+        let scale = scale / Self::BASE_SCALE;
         write_texture_pattern(
             out,
             "jungle",

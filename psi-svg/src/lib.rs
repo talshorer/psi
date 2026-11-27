@@ -12,21 +12,10 @@ use poly::{Poly, PolyBuilder};
 
 pub use texture::PsiSvgTextures;
 
-struct BoundingBox {
-    side: f64,
-    per_boundary: f64,
-}
-
-const _: () = const { assert!(Boundary::MIN == 1) };
-
-impl BoundingBox {
-    fn new(scale: f64) -> Self {
-        Self {
-            side: scale,
-            per_boundary: scale / (Boundary::MAX + 1) as f64,
-        }
-    }
-}
+const PER_BOUNDARY: f64 = const {
+    assert!(Boundary::MIN == 1);
+    1.0 / (Boundary::MAX + 1) as f64
+};
 
 struct Tilt {
     sin: f64,
@@ -49,14 +38,14 @@ impl Tilt {
     }
 }
 
-fn ocean(bb: &BoundingBox, tilt: &Tilt) -> Poly {
+fn ocean(tilt: &Tilt) -> Poly {
     let mut poly = PolyBuilder::default();
     let points = [
         Vec2 { x: 0.0, y: 0.0 },
-        Vec2 { x: 0.0, y: bb.side },
+        Vec2 { x: 0.0, y: 1.0 },
         Vec2 {
-            x: -tilt.cos * bb.side,
-            y: bb.side,
+            x: -tilt.cos,
+            y: 1.0,
         },
     ];
     for (v1, v2) in points.iter().zip(points.iter().cycle().skip(1)) {
@@ -87,14 +76,14 @@ impl Segment {
     }
 }
 
-fn poly_path(poly: &Poly, bb: &BoundingBox, tilt: &Tilt) -> Result<String, std::fmt::Error> {
+fn poly_path(poly: &Poly, scale: f64, tilt: &Tilt) -> Result<String, std::fmt::Error> {
     let mut path = String::new();
     for (i, segment) in poly.iter().enumerate() {
         let directive = if i == 0 { 'M' } else { 'L' };
         let Segment(v0, v1) = segment;
-        let Vec2 { x: x0, y: y0 } = tilt.transform(*v0);
-        let Vec2 { x: x1, y: y1 } = tilt.transform(*v1);
-        let height = tilt.sin * bb.side;
+        let Vec2 { x: x0, y: y0 } = tilt.transform(scale * *v0);
+        let Vec2 { x: x1, y: y1 } = tilt.transform(scale * *v1);
+        let height = tilt.sin * scale;
         let y0 = height - y0;
         let y1 = height - y1;
         write!(&mut path, "{directive} {x0} {y0} {x1} {y1} ")?
@@ -107,15 +96,12 @@ struct PolyLands(BTreeMap<LandNum, (Terrain, Poly)>);
 
 fn emit(
     lands: PolyLands,
-    bb: &BoundingBox,
+    scale: f64,
     tilt: &Tilt,
     textures: &PsiSvgTextures<'_>,
 ) -> Result<String, std::fmt::Error> {
     let mut out = String::new();
-    let viewbox = tilt.transform(Vec2 {
-        x: bb.side,
-        y: bb.side,
-    });
+    let viewbox = tilt.transform(Vec2 { x: scale, y: scale });
     writeln!(
         &mut out,
         r#"<svg xmlns="http://www.w3.org/2000/svg"
@@ -130,7 +116,7 @@ fn emit(
         r#"<defs>\n  <clipPath id="board"><rect x="0" y="0" width="{}" height="{}" /></clipPath>\n"#,
         viewbox.x, viewbox.y,
     )?;
-    textures.write_defs(&mut out, bb.side / 700.0)?;
+    textures.write_defs(&mut out, scale)?;
     writeln!(&mut out, "</defs>")?;
 
     writeln!(&mut out, r#"<g clip-path="url(#board)">"#)?;
@@ -138,11 +124,11 @@ fn emit(
     for (terrain, poly) in lands
         .0
         .values()
-        .chain(std::iter::once(&(Terrain::Ocean, ocean(bb, tilt))))
+        .chain(std::iter::once(&(Terrain::Ocean, ocean(tilt))))
     {
         let fill = texture::fill(*terrain);
 
-        let path = poly_path(poly, bb, tilt)?;
+        let path = poly_path(poly, scale, tilt)?;
         writeln!(
             &mut out,
             r#"<path d="{path}" fill="{fill}" stroke="black" stroke-width="1" />"#
@@ -183,13 +169,12 @@ pub fn from_layout(
     algo: &PsiSvgAlgo,
     textures: &PsiSvgTextures<'_>,
 ) -> Result<String, PsiSvgError> {
-    let bb = BoundingBox::new(scale);
     let tilt = Tilt::new(theta);
     let poly_lands = match algo {
-        PsiSvgAlgo::ForSegVor => for_seg_vor::for_seg_vor(layout, &bb)?,
-        PsiSvgAlgo::ForceOnly(config) => force_only::force_only(layout, &bb, config)?,
+        PsiSvgAlgo::ForSegVor => for_seg_vor::for_seg_vor(layout)?,
+        PsiSvgAlgo::ForceOnly(config) => force_only::force_only(layout, config)?,
     };
-    let svg = emit(poly_lands, &bb, &tilt, textures)?;
+    let svg = emit(poly_lands, scale, &tilt, textures)?;
     Ok(svg)
 }
 

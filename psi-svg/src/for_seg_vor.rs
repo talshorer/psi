@@ -16,9 +16,11 @@ use psi_topology::layout::{Corner, Edge, LandNum, Layout, LayoutEdge, Terrain};
 use psi_vec::{NormalizedVec2, Vec2};
 
 use crate::{
-    BoundingBox, PolyLands, Segment,
+    PER_BOUNDARY, PolyLands, Segment,
     poly::{Poly, PolyBuilder},
 };
+
+const RESOLUTION: f64 = 1000.0;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 struct LandData {
@@ -29,7 +31,6 @@ struct LandData {
 
 struct Graph<'a> {
     layout: &'a Layout,
-    bb: &'a BoundingBox,
     inner: force_graph::ForceGraph<LandData, ()>,
 }
 
@@ -40,60 +41,38 @@ impl<'a> Graph<'a> {
         }
     }
 
-    fn build(layout: &'a Layout, bb: &'a BoundingBox) -> Self {
+    fn build(layout: &'a Layout) -> Self {
         const RIGHT: NormalizedVec2 = NormalizedVec2::const_new(Vec2 { x: 1.0, y: 0.0 }).unwrap();
         const LEFT: NormalizedVec2 = NormalizedVec2::const_new(Vec2 { x: -1.0, y: 0.0 }).unwrap();
         const UP: NormalizedVec2 = NormalizedVec2::const_new(Vec2 { x: 0.0, y: 1.0 }).unwrap();
         const DOWN: NormalizedVec2 = NormalizedVec2::const_new(Vec2 { x: 0.0, y: -1.0 }).unwrap();
 
-        GraphBuilder::new(layout, bb)
-            .corner(
-                Corner::Clock1,
-                Vec2 { x: 0.0, y: bb.side },
-                None,
-                Some(RIGHT),
-            )
+        GraphBuilder::new(layout)
+            .corner(Corner::Clock1, Vec2 { x: 0.0, y: 1.0 }, None, Some(RIGHT))
             .corner(
                 Corner::Clock5,
-                Vec2 {
-                    x: bb.side,
-                    y: bb.side,
-                },
+                Vec2 { x: 1.0, y: 1.0 },
                 Some(LEFT),
                 Some(DOWN),
             )
             .corner(
                 Corner::Clock7,
-                Vec2 { x: bb.side, y: 0.0 },
+                Vec2 { x: 1.0, y: 0.0 },
                 Some(UP),
                 Some(LEFT),
             )
             .corner(Corner::Clock11, Vec2 { x: 0.0, y: 0.0 }, Some(RIGHT), None)
-            .edge(
-                &layout.edges[Edge::Clock3],
-                Vec2 { x: 0.0, y: bb.side },
-                RIGHT,
-            )
-            .edge(
-                &layout.edges[Edge::Clock6],
-                Vec2 {
-                    x: bb.side,
-                    y: bb.side,
-                },
-                DOWN,
-            )
-            .edge(
-                &layout.edges[Edge::Clock9],
-                Vec2 { x: bb.side, y: 0.0 },
-                LEFT,
-            )
+            .edge(&layout.edges[Edge::Clock3], Vec2 { x: 0.0, y: 1.0 }, RIGHT)
+            .edge(&layout.edges[Edge::Clock6], Vec2 { x: 1.0, y: 1.0 }, DOWN)
+            .edge(&layout.edges[Edge::Clock9], Vec2 { x: 1.0, y: 0.0 }, LEFT)
             .finalize(Vec2 {
-                x: -bb.per_boundary,
-                y: bb.side / 2.0,
+                x: -PER_BOUNDARY,
+                y: 1.0 / 2.0,
             })
     }
 
     fn bvg_point(v: Vec2) -> boostvoronoi::geometry::Point<i64> {
+        let v = RESOLUTION * v;
         boostvoronoi::geometry::Point::new(v.x as i64, v.y as i64)
     }
 
@@ -110,8 +89,8 @@ impl<'a> Graph<'a> {
                     }
                     assert!(node.x() as f64 >= 0.0);
                     assert!(node.y() as f64 >= 0.0);
-                    assert!(node.x() as f64 <= self.bb.side);
-                    assert!(node.y() as f64 <= self.bb.side);
+                    assert!(node.x() as f64 <= 1.0);
+                    assert!(node.y() as f64 <= 1.0);
                     nodes.insert(
                         node.data.user_data.land,
                         (
@@ -171,17 +150,17 @@ impl<'a> Graph<'a> {
                     }
                 }
 
-                let lo = -self.bb.side;
-                let hi = self.bb.side * 2.0;
-                let infinity_points = [
-                    Vec2 { x: lo, y: lo },
-                    Vec2 { x: lo, y: hi },
-                    Vec2 { x: hi, y: hi },
-                    Vec2 { x: hi, y: lo },
+                const LO: f64 = -1.0;
+                const HI: f64 = 2.0;
+                const INFINITY_POINTS: [Vec2; 4] = [
+                    Vec2 { x: LO, y: LO },
+                    Vec2 { x: LO, y: HI },
+                    Vec2 { x: HI, y: HI },
+                    Vec2 { x: HI, y: LO },
                 ];
-                for (c1, c2) in infinity_points
+                for (c1, c2) in INFINITY_POINTS
                     .iter()
-                    .zip(infinity_points.iter().cycle().skip(1))
+                    .zip(INFINITY_POINTS.iter().cycle().skip(1))
                 {
                     lines.push(boostvoronoi::geometry::Line::new(
                         Self::bvg_point(*c1),
@@ -198,18 +177,16 @@ impl<'a> Graph<'a> {
 
 struct GraphBuilder<'a> {
     layout: &'a Layout,
-    bb: &'a BoundingBox,
     open: BTreeSet<LandNum>,
     graph: force_graph::ForceGraph<LandData, ()>,
     indices: HashMap<LandNum, force_graph::DefaultNodeIdx>,
 }
 
 impl<'a> GraphBuilder<'a> {
-    fn new(layout: &'a Layout, bb: &'a BoundingBox) -> Self {
+    fn new(layout: &'a Layout) -> Self {
         let open = layout.terrains.keys().copied().collect();
         Self {
             layout,
-            bb,
             open,
             graph: force_graph::ForceGraph::new(Default::default()),
             indices: HashMap::new(),
@@ -250,15 +227,14 @@ impl<'a> GraphBuilder<'a> {
             counter_clockwise
                 .zip(backwards)
                 .map_or_default(|(edge, advance)| {
-                    (self.bb.side
-                        - self.layout.edges[edge].boundaries.last().unwrap().0 as f64
-                            * self.bb.per_boundary)
+                    (1.0 - self.layout.edges[edge].boundaries.last().unwrap().0 as f64
+                        * PER_BOUNDARY)
                         * *advance
                 })
                 + point,
             clockwise.zip(forwards).map_or_default(|(edge, advance)| {
                 self.layout.edges[edge].boundaries.first().unwrap().0 as f64
-                    * self.bb.per_boundary
+                    * PER_BOUNDARY
                     * *advance
             }) + point,
         );
@@ -273,8 +249,8 @@ impl<'a> GraphBuilder<'a> {
             .enumerate()
         {
             let anchor = Segment(
-                ledge.boundaries[idx].0 as f64 * self.bb.per_boundary * *advance + offset,
-                ledge.boundaries[idx + 1].0 as f64 * self.bb.per_boundary * *advance + offset,
+                ledge.boundaries[idx].0 as f64 * PER_BOUNDARY * *advance + offset,
+                ledge.boundaries[idx + 1].0 as f64 * PER_BOUNDARY * *advance + offset,
             );
             let point = 0.5 * (anchor.0 + anchor.1);
             self.land(land, Some((point, anchor)));
@@ -301,7 +277,6 @@ impl<'a> GraphBuilder<'a> {
 
         Graph {
             layout: self.layout,
-            bb: self.bb,
             inner: std::mem::replace(
                 &mut self.graph,
                 force_graph::ForceGraph::new(Default::default()),
@@ -365,12 +340,12 @@ impl<'a> VoronoiPost<'a> {
             SegmentKey(v0.u32(), v1.u32()),
             Segment(
                 Vec2 {
-                    x: p0.x(),
-                    y: p0.y(),
+                    x: p0.x() / RESOLUTION,
+                    y: p0.y() / RESOLUTION,
                 },
                 Vec2 {
-                    x: p1.x(),
-                    y: p1.y(),
+                    x: p1.x() / RESOLUTION,
+                    y: p1.y() / RESOLUTION,
                 },
             ),
         ))
@@ -436,8 +411,8 @@ pub enum ForSegVorError {
     Voronoi(#[from] boostvoronoi::BvError),
 }
 
-pub(crate) fn for_seg_vor(layout: &Layout, bb: &BoundingBox) -> Result<PolyLands, ForSegVorError> {
-    let mut graph = Graph::build(layout, bb);
+pub(crate) fn for_seg_vor(layout: &Layout) -> Result<PolyLands, ForSegVorError> {
+    let mut graph = Graph::build(layout);
     graph.evolve(1000);
     let (diagram, lands) = graph.to_voronoi()?;
     Ok(PolyLands(VoronoiPost::new(&diagram, &lands).polys()))
