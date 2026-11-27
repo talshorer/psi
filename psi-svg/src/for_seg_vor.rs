@@ -411,11 +411,11 @@ impl<'a> VoronoiPost<'a> {
 
                 let mut poly = PolyBuilder::default();
                 let mut segment = *first_segment;
-                poly.push(segment);
+                poly.push(segment.0);
                 let mut next = first_key.1;
                 while !edge_by_vidx.is_empty() {
                     (next, segment) = edge_by_vidx.remove(&next).unwrap();
-                    poly.push(segment);
+                    poly.push(segment.0);
                 }
                 assert_eq!(next, first_key.0);
                 let poly = poly.poly();

@@ -68,14 +68,9 @@ impl Tilt {
 
 fn ocean(tilt: &Tilt) -> Poly {
     let mut poly = PolyBuilder::default();
-    let points = [
-        UnitSquarePoint::new(0.0, 0.0),
-        UnitSquarePoint::new(0.0, 1.0),
-        UnitSquarePoint::new(-tilt.cos, 1.0),
-    ];
-    for (v1, v2) in points.iter().zip(points.iter().cycle().skip(1)) {
-        poly.push(Segment(*v1, *v2));
-    }
+    poly.push(UnitSquarePoint::new(0.0, 0.0));
+    poly.push(UnitSquarePoint::new(0.0, 1.0));
+    poly.push(UnitSquarePoint::new(-tilt.cos, 1.0));
     poly.poly()
 }
 

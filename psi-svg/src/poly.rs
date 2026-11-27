@@ -1,24 +1,44 @@
-use crate::Segment;
+use crate::{Segment, UnitSquarePoint};
 
 #[derive(Default)]
-pub(crate) struct PolyBuilder(Vec<Segment>);
+pub(crate) struct PolyBuilder {
+    last: Option<UnitSquarePoint>,
+    segments: Vec<Segment>,
+}
 
 impl PolyBuilder {
-    pub(crate) fn push(&mut self, segment: Segment) {
-        assert!(self.0.last().is_none_or(|last| last.1 == segment.0));
-        self.0.push(segment);
+    pub(crate) fn push(&mut self, point: UnitSquarePoint) {
+        if let Some(last) = &self.last {
+            self.segments.push(Segment(*last, point));
+        }
+        self.last = Some(point);
+    }
+
+    fn completing_segment(&self) -> Option<Segment> {
+        self.last
+            .as_ref()
+            .zip(self.segments.first())
+            .map(|(last, first_seg)| Segment(*last, first_seg.0))
     }
 
     pub(crate) fn poly(&mut self) -> Poly {
-        assert_eq!(self.0.last().unwrap().1, self.0.first().unwrap().0);
-        Poly(std::mem::take(&mut self.0))
+        if let Some(seg) = self.completing_segment() {
+            self.segments.push(seg);
+        }
+        Poly(std::mem::take(self).segments)
     }
 
     pub(crate) fn has_crosses(&self) -> bool {
-        self.0
+        let completing_segment = self.completing_segment();
+        self.segments
             .iter()
             .enumerate()
-            .flat_map(|(idx, seg1)| self.0[idx + 1..].iter().map(move |seg2| (seg1, seg2)))
+            .flat_map(|(idx, seg1)| {
+                self.segments[idx + 1..]
+                    .iter()
+                    .chain(completing_segment.as_ref())
+                    .map(move |seg2| (seg1, seg2))
+            })
             .any(|(seg1, seg2)| seg1.crosses(seg2))
     }
 }

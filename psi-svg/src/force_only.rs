@@ -15,7 +15,7 @@ use euclid::{Angle, Length, Rotation2D, Scale, Vector2D};
 use psi_topology::layout::{Corner, Edge, LandNum, Layout, Terrain};
 
 use crate::{
-    NormalizedVec2, PER_BOUNDARY, PolyLands, Segment,
+    NormalizedVec2, PER_BOUNDARY, PolyLands,
     poly::{Poly, PolyBuilder},
     units::{UnitSquare, UnitSquarePoint},
 };
@@ -421,14 +421,9 @@ impl<'a> Graph<'a> {
         for (land, data) in &self.cells {
             let terrain = self.layout.terrains[land];
             let mut poly = PolyBuilder::default();
-            let first = self.position[data.poly_vertices.first().unwrap()];
-            let mut prev = first;
-            for vertex in data.poly_vertices.iter().skip(1) {
-                let next = self.position[vertex];
-                poly.push(Segment(prev, next));
-                prev = next;
+            for vertex in data.poly_vertices.iter() {
+                poly.push(self.position[vertex]);
             }
-            poly.push(Segment(prev, first));
             if poly.has_crosses() {
                 return Err(PhysicsSimulationBreakage);
             }
