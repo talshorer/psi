@@ -18,6 +18,7 @@ use crate::{
     NormalizedVec2, PER_BOUNDARY, PolyLands,
     poly::{Poly, PolyBuilder},
     units::{UnitSquare, UnitSquarePoint},
+    within_unit_square,
 };
 
 use key::{BoundaryKey, VertexKey};
@@ -413,10 +414,7 @@ impl<'a> Graph<'a> {
     fn polys(&self) -> Result<BTreeMap<LandNum, (Terrain, Poly)>, PhysicsSimulationBreakage> {
         let mut polys = BTreeMap::new();
         for (v, p) in &self.position {
-            assert!(
-                p.x >= 0.0 && p.x <= 1.0 && p.y >= 0.0 && p.y <= 1.0,
-                "{v:?} {p:?}",
-            )
+            assert!(within_unit_square(*p), "{v:?} {p:?}",)
         }
         for (land, data) in &self.cells {
             let terrain = self.layout.terrains[land];

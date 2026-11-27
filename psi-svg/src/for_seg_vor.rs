@@ -19,6 +19,7 @@ use crate::{
     NormalizedVec2, PER_BOUNDARY, PolyLands, Segment,
     poly::{Poly, PolyBuilder},
     units::{UnitSquare, UnitSquarePoint},
+    within_unit_square,
 };
 
 struct Voronoi;
@@ -108,17 +109,9 @@ impl<'a> Graph<'a> {
                     if matches!(node.data.user_data.terrain, Terrain::Ocean) {
                         return;
                     }
-                    assert!(node.x() as f64 >= 0.0);
-                    assert!(node.y() as f64 >= 0.0);
-                    assert!(node.x() as f64 <= 1.0);
-                    assert!(node.y() as f64 <= 1.0);
-                    nodes.insert(
-                        node.data.user_data.land,
-                        (
-                            node.data.user_data,
-                            UnitSquarePoint::new(node.x().into(), node.y().into()),
-                        ),
-                    );
+                    let point = UnitSquarePoint::new(node.x().into(), node.y().into());
+                    assert!(within_unit_square(point));
+                    nodes.insert(node.data.user_data.land, (node.data.user_data, point));
                 });
                 let mut lines = Vec::new();
                 for (data, point) in nodes.values() {

@@ -48,6 +48,10 @@ impl Deref for NormalizedVec2 {
     }
 }
 
+fn within_unit_square(point: UnitSquarePoint) -> bool {
+    point.x >= 0.0 && point.x <= 1.0 && point.y >= 0.0 && point.y <= 1.0
+}
+
 struct Tilt {
     sin: f64,
     cos: f64,
